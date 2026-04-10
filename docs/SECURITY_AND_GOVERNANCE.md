@@ -1,7 +1,8 @@
 # ENTIA MCP Server — Security & Governance Document
 
-> Version: 1.0.0 | Date: 2026-04-10
-> Service: `entia-mcp-server` | Cloud Run rev: `entia-mcp-server-00002-6r9`
+> Version: 1.0.4 | Date: 2026-04-10 (updated after security audit)
+> Service: `entia-mcp-server` | Cloud Run rev: `entia-mcp-server-00005-x8s`
+> Domain: `mcp.entia.systems` (SSL provisioned, CNAME → ghs.googlehosted.com)
 > Author: PrecisionAI Marketing OU
 > Related: `KERNEL_GOVERNANCE.md`, `SECURITY_AUDIT.md`, `SECRETS_INVENTORY.md`, `INFRASTRUCTURE_STATE.md`
 
@@ -15,7 +16,7 @@ A **read-only proxy** that exposes 6 tools over the MCP protocol (JSON-RPC 2.0).
 - Write to BigQuery, Firestore, or any database
 - Create, modify, or delete entities
 - Access admin endpoints or Kernel gates
-- Store any state between requests
+- Store any persistent state (sessions are in-memory, max 100, TTL 30 min)
 - Have direct access to GCP services (no service account keys)
 
 All data flows through the existing ENTIA REST API:
@@ -212,13 +213,26 @@ The MCP Server is a **consumer** of the pipeline output, not a participant.
 
 ## 7. Cloud Run Deployment
 
+### Security Hardening (v1.0.4 — 2026-04-10)
+
+| Protection | Implementation | File |
+|---|---|---|
+| **Session exhaustion** | MAX_SESSIONS=100, TTL 30min, cleanup sweep 60s, oldest-idle eviction | index.ts |
+| **Body size limit** | 1MB max POST body, 413 rejection | index.ts |
+| **Path traversal** | Zod regex `/^[a-z0-9-]+$/` on sector, city, slug | get_entia_home.ts |
+| **Error sanitization** | Truncate 200 chars, strip API keys/Bearer/sk-* | client.ts |
+| **Health info leak** | Session count removed from /health | index.ts |
+| **Input length** | max 500 chars on queries, max 253 on domains | entity_lookup.ts, run_risk_audit.ts |
+| **Domain validation** | RFC-compliant regex on domain field | run_risk_audit.ts |
+| **Graceful shutdown** | SIGTERM/SIGINT → drain sessions → exit | index.ts |
+
 ### Service Configuration
 
 | Parameter | Value |
 |-----------|-------|
 | **Service name** | `entia-mcp-server` |
 | **Region** | `europe-west1` (same as all ENTIA services) |
-| **Image** | `gcr.io/systems-ia-entia/entia-mcp-server:v1.0.1` |
+| **Image** | `gcr.io/systems-ia-entia/entia-mcp-server:v1.0.4` |
 | **Port** | 3000 |
 | **Memory** | 256Mi |
 | **CPU** | 1 |
@@ -228,20 +242,14 @@ The MCP Server is a **consumer** of the pipeline output, not a participant.
 | **Secrets** | `ENTIA_API_KEY=ENTIA_API_KEY:latest` (mounted from Secret Manager) |
 | **Env vars** | `MCP_TRANSPORT=http`, `MCP_PORT=3000` |
 
-### Service URL
+### Service URLs
 
 ```
-Production: https://entia-mcp-server-574503109832.europe-west1.run.app
-Health:     https://entia-mcp-server-574503109832.europe-west1.run.app/health
-MCP:        https://entia-mcp-server-574503109832.europe-west1.run.app/mcp
-```
-
-### Planned: Custom Domain
-
-```
-Target:  mcp.entia.systems
-Method:  CNAME → Cloud Run domain mapping
-Status:  PENDING (after integrity fix deployed)
+Custom domain:  https://mcp.entia.systems/mcp          ← PRIMARY
+Health:         https://mcp.entia.systems/health
+Direct:         https://entia-mcp-server-574503109832.europe-west1.run.app/mcp
+DNS:            mcp.entia.systems CNAME ghs.googlehosted.com (TTL 3600)
+SSL:            Google-managed, auto-renewal
 ```
 
 ### Relationship to Other Cloud Run Services
