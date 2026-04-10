@@ -1,4 +1,5 @@
 import { config } from './config.js';
+import { logUpstreamCall } from './logger.js';
 
 /**
  * HTTP client wrapper for ENTIA API.
@@ -42,9 +43,20 @@ export class EntiaClient {
     }
 
     const timeout = options?.timeoutMs ?? config.REQUEST_TIMEOUT_MS;
+    const start = performance.now();
     const res = await fetch(url.toString(), {
       headers,
       signal: AbortSignal.timeout(timeout),
+    });
+    const latency = Math.round(performance.now() - start);
+
+    logUpstreamCall({
+      method: 'GET',
+      path,
+      status: res.status,
+      latency_ms: latency,
+      auth: !!this.apiKey,
+      rate_limited: res.status === 429,
     });
 
     if (res.status === 429) {
@@ -67,6 +79,7 @@ export class EntiaClient {
    */
   async getJsonLdFromHtml(path: string): Promise<Record<string, unknown> | null> {
     const url = new URL(path, this.baseUrl);
+    const start = performance.now();
     const res = await fetch(url.toString(), {
       headers: {
         'Accept': 'text/html',
@@ -74,6 +87,16 @@ export class EntiaClient {
         ...(this.apiKey ? { 'x-entia-api-key': this.apiKey } : {}),
       },
       signal: AbortSignal.timeout(config.REQUEST_TIMEOUT_MS),
+    });
+    const latency = Math.round(performance.now() - start);
+
+    logUpstreamCall({
+      method: 'GET',
+      path,
+      status: res.status,
+      latency_ms: latency,
+      auth: !!this.apiKey,
+      rate_limited: res.status === 429,
     });
 
     if (!res.ok) {
@@ -109,6 +132,7 @@ export class EntiaClient {
     }
 
     const timeout = options?.timeoutMs ?? config.REQUEST_TIMEOUT_MS;
+    const start = performance.now();
     const res = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
       headers: {
@@ -119,6 +143,16 @@ export class EntiaClient {
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeout),
+    });
+    const latency = Math.round(performance.now() - start);
+
+    logUpstreamCall({
+      method: 'POST',
+      path,
+      status: res.status,
+      latency_ms: latency,
+      auth: !!this.apiKey,
+      rate_limited: res.status === 429,
     });
 
     if (res.status === 429) {
