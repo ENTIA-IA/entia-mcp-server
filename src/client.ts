@@ -66,7 +66,7 @@ export class EntiaClient {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '(no body)');
-      throw new Error(`ENTIA API error ${res.status}: ${body}`);
+      throw new Error(`ENTIA API error ${res.status}: ${sanitizeError(body)}`);
     }
 
     return res.json() as Promise<T>;
@@ -162,11 +162,24 @@ export class EntiaClient {
 
     if (!res.ok) {
       const err = await res.text().catch(() => '(no body)');
-      throw new Error(`ENTIA API error ${res.status}: ${err}`);
+      throw new Error(`ENTIA API error ${res.status}: ${sanitizeError(err)}`);
     }
 
     return res.json() as Promise<T>;
   }
+}
+
+/**
+ * Sanitize upstream error messages before returning to MCP clients.
+ * Truncates to 200 chars and strips anything that looks like an API key.
+ */
+function sanitizeError(msg: string): string {
+  // Strip potential API keys (hex strings > 20 chars, Bearer tokens, sk-* keys)
+  let sanitized = msg.replace(/\b[a-f0-9]{20,}\b/gi, '[REDACTED]');
+  sanitized = sanitized.replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]');
+  sanitized = sanitized.replace(/sk-[a-zA-Z0-9_-]+/g, '[REDACTED]');
+  // Truncate
+  return sanitized.length > 200 ? sanitized.substring(0, 200) + '...' : sanitized;
 }
 
 export const entiaClient = new EntiaClient();

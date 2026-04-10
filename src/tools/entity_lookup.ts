@@ -3,7 +3,7 @@ import { entiaClient } from '../client.js';
 import type { EntityLookupResponse } from '../types/entity.js';
 
 export const EntityLookupSchema = z.object({
-  q: z.string().min(2).describe(
+  q: z.string().min(2).max(500).describe(
     'Company name, CIF/NIF (e.g. B82846825), EU VAT ID (e.g. ESB82846825), or LEI code (20 chars). ' +
     'The API auto-detects the input type.'
   ),

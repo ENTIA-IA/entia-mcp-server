@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import type { AuditResponse } from '../types/entity.js';
 
 export const RunRiskAuditSchema = z.object({
-  domain: z.string().describe('Domain to audit (e.g. "clinicadental.es", "example.com")'),
+  domain: z.string().min(3).max(253).regex(/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i).describe('Domain to audit (e.g. "clinicadental.es", "example.com")'),
   sector_id: z.string().optional().describe(
     'Optional sector hint for more accurate scoring. ' +
     'Examples: dental, legal, talleres, estetica, inmobiliarias'

@@ -3,7 +3,7 @@ import { entiaClient } from '../client.js';
 import type { SearchResponse } from '../types/entity.js';
 
 export const SearchEntitiesSchema = z.object({
-  q: z.string().min(2).describe('Search query — company name or keywords'),
+  q: z.string().min(2).max(500).describe('Search query — company name or keywords'),
   country: z.string().length(2).optional().describe('ISO country code filter (e.g. "es", "gb", "fr")'),
   sector: z.string().optional().describe(
     'Sector filter. Examples: dental, legal, talleres, estetica, inmobiliarias, ' +

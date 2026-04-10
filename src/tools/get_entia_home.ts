@@ -3,10 +3,10 @@ import { entiaClient } from '../client.js';
 import { config } from '../config.js';
 
 export const GetEntiaHomeSchema = z.object({
-  country: z.string().length(2).describe('ISO 3166-1 alpha-2 country code, lowercase (e.g. "es", "gb", "fr")'),
-  sector: z.string().describe('Industry slug (e.g. "dental", "legal", "talleres", "estetica", "inmobiliarias")'),
-  city: z.string().describe('City slug, lowercase with hyphens (e.g. "madrid", "barcelona", "london")'),
-  slug: z.string().describe('URL-safe business name slug (e.g. "clinica-dental-sonrisa")'),
+  country: z.string().length(2).regex(/^[a-z]{2}$/).describe('ISO 3166-1 alpha-2 country code, lowercase (e.g. "es", "gb", "fr")'),
+  sector: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/).describe('Industry slug (e.g. "dental", "legal", "talleres", "estetica", "inmobiliarias")'),
+  city: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).describe('City slug, lowercase with hyphens (e.g. "madrid", "barcelona", "london")'),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/).describe('URL-safe business name slug (e.g. "clinica-dental-sonrisa")'),
 });
 
 export type GetEntiaHomeArgs = z.infer<typeof GetEntiaHomeSchema>;

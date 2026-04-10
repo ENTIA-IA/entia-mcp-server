@@ -70,7 +70,19 @@ function extractErrorType(msg: string): string {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'entia-mcp-server',
-    version: '1.0.2',
+    version: '1.0.4',
+    icons: [
+      {
+        src: 'https://entia.systems/favicon-192x192.png',
+        mimeType: 'image/png',
+        sizes: ['192x192'],
+      },
+      {
+        src: 'https://entia.systems/favicon-48x48.png',
+        mimeType: 'image/png',
+        sizes: ['48x48'],
+      },
+    ],
   });
 
   // --- Tool 1: entity_lookup (public, 10 req/min) ---
