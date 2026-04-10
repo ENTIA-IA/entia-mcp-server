@@ -19,9 +19,12 @@ export function createServer(): McpServer {
   server.tool(
     'entity_lookup',
     'Look up any business entity by name, CIF/NIF, EU VAT ID, or LEI code. ' +
-    'Returns verified identity, trust score (VERIFIED/PARTIAL/UNVERIFIED), and ' +
+    'Returns identity data, trust score (VERIFIED/PARTIAL/UNVERIFIED), and ' +
     'cross-verification against BORME, VIES, GLEIF, and OFAC. ' +
-    'Covers 5.5M+ entities across 34 countries. No API key required.',
+    'Covers 5.5M+ registered entities across 34 countries. ' +
+    'Enrichment depth varies: ES has full socioeconomic data, GB/FR have name+address only. ' +
+    'Check the data_coverage field in the response to see exactly what is populated. ' +
+    'No API key required.',
     EntityLookupSchema.shape,
     async (args) => {
       try {
@@ -36,10 +39,11 @@ export function createServer(): McpServer {
   // --- Tool 2: get_entia_home (public) ---
   server.tool(
     'get_entia_home',
-    'Retrieve the full Schema.org JSON-LD @graph for a verified entity. ' +
-    'Returns 4 nodes: (1) WebPage canonical metadata, (2) Entity identity with address, geo, ' +
+    'Retrieve the full Schema.org JSON-LD @graph for a registered entity\'s Entia Home page. ' +
+    'Returns up to 4 nodes: (1) WebPage canonical metadata, (2) Entity identity with address, geo, ' +
     'identifiers, and official sources, (3) Verification Report with HMAC signature and ' +
-    'per-source confidence levels, (4) Territorial socioeconomic profile. ' +
+    'per-source confidence levels, (4) Territorial socioeconomic profile (ES only: INE/SEPE/Hacienda). ' +
+    'Not all entities have an Entia Home — only ~500K published pages exist. ' +
     'Use search_entities first if you do not know the exact path. No API key required.',
     GetEntiaHomeSchema.shape,
     async (args) => {
@@ -55,8 +59,10 @@ export function createServer(): McpServer {
   // --- Tool 3: search_entities (API key required, 10 req/min) ---
   server.tool(
     'search_entities',
-    'Search 5.5M+ verified entities across 34 countries by name, keyword, country, or sector. ' +
-    'Returns matching entities with trust badges and Entia Home URLs. ' +
+    'Search 5.5M+ registered entities across 34 countries by name, keyword, country, or sector. ' +
+    'Coverage varies by country: ES ~900K enriched with full contact and socioeconomic data, ' +
+    'GB/FR name+address only, GLEIF countries name+LEI only. ' +
+    'Check data_coverage in results to understand what fields are populated. ' +
     'Use this to find entities before calling get_entia_home. API key required.',
     SearchEntitiesSchema.shape,
     async (args) => {
@@ -103,8 +109,10 @@ export function createServer(): McpServer {
   // --- Tool 6: get_platform_stats (public) ---
   server.tool(
     'get_platform_stats',
-    'Get real-time ENTIA platform statistics: total verified entities, country coverage, ' +
-    'active data sources, and published Entia Homes. Cached 1h server-side. No API key required.',
+    'Get real-time ENTIA platform statistics: total registered entities, country coverage, ' +
+    'active data sources, and published Entia Homes. ' +
+    'Note: total_entities is the full registry; only ~79K pass the Quality Gate for full publication. ' +
+    'Cached 1h server-side. No API key required.',
     {},
     async () => {
       try {

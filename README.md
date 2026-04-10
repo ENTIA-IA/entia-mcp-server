@@ -1,13 +1,15 @@
 # ENTIA MCP Server
 
-MCP Server for the [ENTIA](https://entia.systems) entity verification and trust infrastructure platform. Exposes 5.6M+ verified business entities across 34 countries to any MCP-compatible AI agent.
+MCP Server for the [ENTIA](https://entia.systems) entity verification and trust infrastructure platform. Exposes 5.6M+ registered business entities across 34 countries to any MCP-compatible AI agent.
+
+**Data coverage note:** Enrichment depth varies by country. Spain (~900K entities) has full socioeconomic data (INE/SEPE/Hacienda). GB/FR have name+address. GLEIF countries have name+LEI. ~79K entities pass the full Quality Gate. Check `data_coverage` in API responses.
 
 ## Tools
 
 | Tool | Auth | Description |
 |------|------|-------------|
 | `entity_lookup` | Public | Look up entity by name, CIF/NIF, EU VAT, or LEI |
-| `get_entia_home` | Public | Get full JSON-LD @graph (4 nodes) for a verified entity |
+| `get_entia_home` | Public | Get full JSON-LD @graph (4 nodes) for a registered entity |
 | `search_entities` | API key | Search entities by name, country, sector |
 | `lookup_by_domain` | API key | Look up entity by domain (v1.1 — stub) |
 | `run_risk_audit` | API key | AI-readiness audit on any domain (0-100 score) |
