@@ -1,8 +1,8 @@
 # ENTIA MCP Server — Security & Governance Document
 
-> Version: 1.0.4 | Date: 2026-04-10 (updated after security audit)
-> Service: `entia-mcp-server` | Cloud Run rev: `entia-mcp-server-00005-x8s`
-> Domain: `mcp.entia.systems` (SSL provisioned, CNAME → ghs.googlehosted.com)
+> Version: 1.0.6 | Date: 2026-04-11 (final session state)
+> Service: `entia-mcp-server` | Cloud Run rev: `entia-mcp-server-00007-x7j`
+> Domain: `mcp.entia.systems` (SSL live, CNAME → ghs.googlehosted.com)
 > Author: PrecisionAI Marketing OU
 > Related: `KERNEL_GOVERNANCE.md`, `SECURITY_AUDIT.md`, `SECRETS_INVENTORY.md`, `INFRASTRUCTURE_STATE.md`
 
@@ -94,22 +94,70 @@ All rate limits are enforced by `core/auth.py` on the main API gateway, NOT by t
 | audit | `/api/v1/audit` | 5 req/min/IP | API key + IP |
 | default | All other | 60 req/min/IP | IP-based |
 
-### MCP Server Rate Limiting
+### MCP Server Rate Limiting (v1.0.6 — IMPLEMENTED)
 
-The MCP Server does **not** implement its own rate limiting in v1.0. Rationale:
-- All requests are proxied to the ENTIA API which enforces limits
-- Cloud Run has built-in concurrency limits (max 5 instances)
-- Adding a Redis-based rate limiter is planned for v1.1
+The MCP Server implements **per-client, per-tool rate limiting** in-memory via sliding window counters (`src/rate_limiter.ts`). Limits are enforced **before** calling the upstream API — rejected calls cost nothing.
+
+| Tool | Limit per client | Window | Enforcement |
+|------|-----------------|--------|-------------|
+| `entity_lookup` | 10/min | 60s sliding | Pre-upstream |
+| `get_entia_home` | 10/min | 60s sliding | Pre-upstream |
+| `search_entities` | 10/min | 60s sliding | Pre-upstream |
+| `run_risk_audit` | **3/min** | 60s sliding | Pre-upstream |
+| `get_platform_stats` | 20/min | 60s sliding | Pre-upstream |
+| `lookup_by_domain` | 10/min | 60s sliding | Pre-upstream |
+
+**Client identification:** Rate limits are keyed by `client_name` from the MCP `initialize` handshake. Each client has independent limits — one client hitting their ceiling does not affect others.
+
+**When exceeded:** Returns MCP error with message: `"Rate limited: {tool} allows {limit} calls/min per client. Retry in {N}s."` No upstream call is made.
+
+**Cleanup:** Expired sliding windows are pruned every 5 minutes to prevent memory growth.
+
+**Verified:** 12 rapid entity_lookup calls → calls 1-10 OK, calls 11-12 rejected with rate limit message.
+
+### Client Identity Tracking (v1.0.5 — IMPLEMENTED)
+
+Every MCP session logs the connecting client's identity via `clientInfo` from the MCP `initialize` handshake:
+
+| Field | Source | Example | Logged as |
+|-------|--------|---------|-----------|
+| `client_name` | `params.clientInfo.name` | `claude-desktop`, `cursor-ide` | `client_name` |
+| `client_version` | `params.clientInfo.version` | `4.6`, `0.45` | `client_version` |
+| `session_id` | Transport-generated UUID (first 8 chars) | `a3ef5c09` | `session_id` |
+
+**Storage:** `src/session_store.ts` — in-memory Map, cleaned up on session close/expiry.
+
+**Log events:**
+- `session_start`: logged on every `initialize` with full client identity
+- Every `tool call`: tagged with `client_name`, `client_version`, `session_id`
+
+**Dashboard visibility:** MC panel at `/mc/mcp` shows:
+- "Clientes conectados" section with calls, sessions, latency, last seen per client
+- Live feed entries show client name next to tool name
+- "N clientes externos conectados" banner (green when external clients exist, amber when only internal)
 
 ### Abuse Scenarios & Mitigations
 
 | Scenario | Risk | Mitigation |
 |----------|------|------------|
-| Agent spams entity_lookup | MEDIUM | Upstream 10/min limit. Cloud Run auto-scales to 5 max. |
-| Agent enumerate entities via search | LOW | API key required. `per_page` capped at 50. |
-| Agent DDoS run_risk_audit | LOW | 5/min hard limit. 30s timeout per request. Max 5 concurrent. |
-| Stolen API key used from MCP | HIGH | Key rotation via Secret Manager. Monitor usage in ENTIA API logs. |
-| Prompt injection via entity data | MEDIUM | MCP Server returns raw JSON — does not execute any instructions found in entity data. |
+| Agent spams entity_lookup | **LOW** | 10/min per-client rate limit. Rejected before upstream call. |
+| Multiple agents share IP | **LOW** | Rate limits are per `client_name`, not per IP. Independent limits. |
+| Agent enumerate entities via search | LOW | API key required + 10/min limit + `per_page` capped at 50. |
+| Agent DDoS run_risk_audit | **LOW** | 3/min per-client hard limit + 30s timeout. |
+| Stolen API key used from MCP | MEDIUM | Key rotation via Secret Manager. `client_name` logged for attribution. |
+| Session exhaustion (DoS) | **LOW** | MAX_SESSIONS=100, TTL 30min, oldest-idle eviction. |
+| Large POST body (OOM) | **LOW** | 1MB body limit, 413 rejection. |
+| Prompt injection via entity data | LOW | MCP Server returns raw JSON — does not execute instructions. |
+
+### Cost Control
+
+| Metric | Value |
+|--------|-------|
+| Cost per call | ~€0.00004 (Cloud Run 256MB, <1s) |
+| Max calls per client per hour | 600 (entity_lookup at 10/min) |
+| Max cost per client per hour | €0.024 |
+| Max cost per client per day | €0.58 |
+| Dashboard visibility | KPI "Coste" card shows estimated EUR in real-time |
 
 ---
 
@@ -232,7 +280,7 @@ The MCP Server is a **consumer** of the pipeline output, not a participant.
 |-----------|-------|
 | **Service name** | `entia-mcp-server` |
 | **Region** | `europe-west1` (same as all ENTIA services) |
-| **Image** | `gcr.io/systems-ia-entia/entia-mcp-server:v1.0.4` |
+| **Image** | `gcr.io/systems-ia-entia/entia-mcp-server:v1.0.6` |
 | **Port** | 3000 |
 | **Memory** | 256Mi |
 | **CPU** | 1 |
@@ -388,7 +436,9 @@ Before any deploy to production:
 - [ ] `npx tsc` — 0 errors
 - [ ] stdio test: `tools/list` returns 6 tools
 - [ ] stdio test: `entity_lookup("Telefonica")` returns real data
+- [ ] Rate limit test: 12 rapid calls → calls 11-12 rejected
 - [ ] Tool descriptions use "registered" (never "verified" for total count)
+- [ ] Client identity visible in logs: `client_name`, `session_id`
 - [ ] No secrets in source code (grep for API keys, tokens)
 - [ ] `.gitignore` excludes `.env`, `dist/`, `node_modules/`
 - [ ] Cloud Build: `gcloud builds submit --tag gcr.io/systems-ia-entia/entia-mcp-server:vX.Y.Z`

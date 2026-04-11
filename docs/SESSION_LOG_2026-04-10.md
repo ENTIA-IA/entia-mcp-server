@@ -1,7 +1,7 @@
 # ENTIA MCP Server — Session Log 2026-04-10
 
 > From zero to production in one session.
-> Final state: v1.0.4 live on `mcp.entia.systems` with SSL, 8 security fixes, structured logging.
+> Final state: v1.0.6 live on `mcp.entia.systems` with SSL, 8 security fixes, structured logging, client identity tracking, per-client rate limiting, MC observability panel.
 
 ---
 
@@ -39,6 +39,9 @@
 | 6 | `7082a91` | docs: Execution plan — observability (4 capas) + distribution (5 channels) |
 | 7 | `4836a40` | fix: HTTP transport — per-session architecture for Claude.ai compatibility |
 | 8 | `1b7ee33` | security: fix 1 CRITICAL + 2 HIGH + 3 MEDIUM + add ENTIA icon |
+| 9 | `7b54d43` | docs: session log + governance update to v1.0.4 |
+| 10 | `9955ce6` | feat: client identity tracking — who calls us, from where |
+| 11 | `05af5ba` | feat: per-client rate limiting — protects upstream API + controls cost |
 
 ---
 
