@@ -1,6 +1,8 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server.js';
 import { config } from './config.js';
+import { logSessionStart } from './logger.js';
+import { setClient, removeClient, setActiveSession } from './session_store.js';
 
 // --- Security limits ---
 const MAX_SESSIONS = 100;
@@ -32,6 +34,7 @@ async function main() {
         if (now - entry.lastActivity > SESSION_TTL_MS) {
           entry.transport.close().catch(() => {});
           sessions.delete(sid);
+          removeClient(sid);
           console.error(`[ENTIA MCP] Session ${sid.substring(0, 8)}... expired (idle ${Math.round((now - entry.lastActivity) / 1000)}s)`);
         }
       }
@@ -123,11 +126,28 @@ async function main() {
           await transport.handleRequest(req, res, parsedBody);
 
           const sid = transport.sessionId;
-          if (sid) sessions.set(sid, { transport, lastActivity: Date.now() });
+          if (sid) {
+            sessions.set(sid, { transport, lastActivity: Date.now() });
+
+            // Extract clientInfo from initialize params
+            const initMsg = Array.isArray(parsedBody)
+              ? (parsedBody as Array<{ method?: string; params?: { clientInfo?: { name?: string; version?: string } } }>).find(m => m.method === 'initialize')
+              : (parsedBody as { params?: { clientInfo?: { name?: string; version?: string } } });
+            const ci = initMsg?.params?.clientInfo;
+            const clientId = {
+              name: ci?.name || 'unknown',
+              version: ci?.version || '0',
+              sessionId: sid.substring(0, 8),
+            };
+            setClient(sid, clientId);
+            logSessionStart(clientId);
+          }
         } else if (sessionId && sessions.has(sessionId)) {
           const entry = sessions.get(sessionId)!;
-          entry.lastActivity = Date.now(); // touch
+          entry.lastActivity = Date.now();
+          setActiveSession(sessionId); // so withLogging() can read client identity
           await entry.transport.handleRequest(req, res, parsedBody);
+          setActiveSession(undefined);
         } else {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
@@ -164,6 +184,7 @@ async function main() {
           const entry = sessions.get(sessionId)!;
           await entry.transport.close();
           sessions.delete(sessionId);
+          removeClient(sessionId);
           res.writeHead(200);
           res.end();
         } else {

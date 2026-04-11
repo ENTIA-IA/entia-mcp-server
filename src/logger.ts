@@ -7,10 +7,13 @@ import { config } from './config.js';
  * Outputs JSON to stderr (Cloud Run captures stderr as structured logs).
  * Each log entry is a single JSON object that Cloud Logging can parse,
  * filter, and aggregate natively.
- *
- * Format follows Google Cloud Logging structured logging spec:
- * https://cloud.google.com/logging/docs/structured-logging
  */
+
+export interface ClientIdentity {
+  name: string;       // e.g. "claude-ai", "custom-agent", "curl-test"
+  version: string;    // e.g. "1.0", "2024.11"
+  sessionId: string;  // MCP session UUID (first 8 chars for privacy)
+}
 
 export interface ToolCallLog {
   tool: string;
@@ -20,7 +23,8 @@ export interface ToolCallLog {
   error_type?: string;
   upstream_status?: number;
   upstream_latency_ms?: number;
-  query_hint?: string; // first 50 chars of query, for debugging — never full PII
+  query_hint?: string;
+  client?: ClientIdentity;
 }
 
 export interface UpstreamCallLog {
@@ -42,13 +46,32 @@ export function hashKey(key: string): string {
 }
 
 /**
- * Log a tool call with structured JSON.
- * Cloud Run → Cloud Logging picks this up automatically.
+ * Log a new MCP session (on initialize).
+ */
+export function logSessionStart(client: ClientIdentity): void {
+  const log = {
+    severity: 'INFO',
+    message: `MCP session: ${client.name}/${client.version} → ${client.sessionId}`,
+    'logging.googleapis.com/labels': {
+      service: 'entia-mcp-server',
+      component: 'session',
+    },
+    event: 'session_start',
+    client_name: client.name,
+    client_version: client.version,
+    session_id: client.sessionId,
+    timestamp: new Date().toISOString(),
+  };
+  console.error(JSON.stringify(log));
+}
+
+/**
+ * Log a tool call with structured JSON + client identity.
  */
 export function logToolCall(entry: ToolCallLog): void {
   const log = {
     severity: entry.status === 'error' ? 'WARNING' : 'INFO',
-    message: `MCP tool:${entry.tool} ${entry.status} ${entry.latency_ms}ms`,
+    message: `MCP tool:${entry.tool} ${entry.status} ${entry.latency_ms}ms${entry.client ? ` [${entry.client.name}]` : ''}`,
     'logging.googleapis.com/labels': {
       service: 'entia-mcp-server',
       component: 'tool',
@@ -61,6 +84,12 @@ export function logToolCall(entry: ToolCallLog): void {
     ...(entry.upstream_status ? { upstream_status: entry.upstream_status } : {}),
     ...(entry.upstream_latency_ms ? { upstream_latency_ms: entry.upstream_latency_ms } : {}),
     ...(entry.query_hint ? { query_hint: entry.query_hint } : {}),
+    // Client identity
+    ...(entry.client ? {
+      client_name: entry.client.name,
+      client_version: entry.client.version,
+      session_id: entry.client.sessionId,
+    } : {}),
     api_key_hash: hashKey(config.ENTIA_API_KEY),
     timestamp: new Date().toISOString(),
   };

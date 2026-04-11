@@ -7,6 +7,7 @@ import { runRiskAudit, RunRiskAuditSchema } from './tools/run_risk_audit.js';
 import { getPlatformStats } from './tools/get_platform_stats.js';
 import { logToolCall } from './logger.js';
 import { config } from './config.js';
+import { getActiveClient } from './session_store.js';
 
 /**
  * Wrap a tool handler with structured logging.
@@ -22,17 +23,20 @@ function withLogging(
     try {
       const result = await handler(args);
       const latency = Math.round(performance.now() - start);
+      const client = getActiveClient();
       logToolCall({
         tool: toolName,
         auth: requiresAuth && !!config.ENTIA_API_KEY,
         latency_ms: latency,
         status: 'ok',
         query_hint: truncateForLog(args),
+        client,
       });
       return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
     } catch (err) {
       const latency = Math.round(performance.now() - start);
       const errorMsg = (err as Error).message;
+      const client = getActiveClient();
       logToolCall({
         tool: toolName,
         auth: requiresAuth && !!config.ENTIA_API_KEY,
@@ -40,6 +44,7 @@ function withLogging(
         status: 'error',
         error_type: extractErrorType(errorMsg),
         query_hint: truncateForLog(args),
+        client,
       });
       return { content: [{ type: 'text' as const, text: `Error: ${errorMsg}` }], isError: true };
     }
