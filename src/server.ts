@@ -8,10 +8,11 @@ import { getPlatformStats } from './tools/get_platform_stats.js';
 import { logToolCall } from './logger.js';
 import { config } from './config.js';
 import { getActiveClient } from './session_store.js';
+import { checkRateLimit } from './rate_limiter.js';
 
 /**
- * Wrap a tool handler with structured logging.
- * Logs tool name, auth status, latency, and error type to Cloud Logging.
+ * Wrap a tool handler with rate limiting + structured logging.
+ * Rate limit checked BEFORE calling upstream — saves cost.
  */
 function withLogging(
   toolName: string,
@@ -19,11 +20,35 @@ function withLogging(
   handler: (args: Record<string, unknown>) => Promise<unknown>,
 ): (args: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
   return async (args) => {
+    const client = getActiveClient();
+    const clientName = client?.name || 'anonymous';
+
+    // --- Rate limit check (per client, per tool) ---
+    const rl = checkRateLimit(clientName, toolName);
+    if (!rl.allowed) {
+      const retryAfterSec = Math.ceil(rl.resetMs / 1000);
+      logToolCall({
+        tool: toolName,
+        auth: requiresAuth && !!config.ENTIA_API_KEY,
+        latency_ms: 0,
+        status: 'error',
+        error_type: 'rate_limited',
+        query_hint: truncateForLog(args),
+        client,
+      });
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `Rate limited: ${toolName} allows ${rl.limit} calls/min per client. Retry in ${retryAfterSec}s.`,
+        }],
+        isError: true,
+      };
+    }
+
     const start = performance.now();
     try {
       const result = await handler(args);
       const latency = Math.round(performance.now() - start);
-      const client = getActiveClient();
       logToolCall({
         tool: toolName,
         auth: requiresAuth && !!config.ENTIA_API_KEY,

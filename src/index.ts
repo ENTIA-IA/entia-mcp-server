@@ -3,6 +3,7 @@ import { createServer } from './server.js';
 import { config } from './config.js';
 import { logSessionStart } from './logger.js';
 import { setClient, removeClient, setActiveSession } from './session_store.js';
+import { cleanupExpiredWindows } from './rate_limiter.js';
 
 // --- Security limits ---
 const MAX_SESSIONS = 100;
@@ -39,7 +40,11 @@ async function main() {
         }
       }
     }, CLEANUP_INTERVAL_MS);
-    cleanupTimer.unref(); // don't prevent process exit
+    cleanupTimer.unref();
+
+    // Rate limiter cleanup every 5 min
+    const rlCleanup = setInterval(cleanupExpiredWindows, 5 * 60 * 1000);
+    rlCleanup.unref();
 
     const httpServer = http.createServer(async (req, res) => {
       const url = req.url ?? '/';
