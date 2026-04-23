@@ -78,3 +78,26 @@ No secrets are handled in frontend code; OTP/payment/audit orchestration is inte
 - Email format is validated before journey creation.
 - Disposable email domains are blocked by default (configurable).
 - OTP and payment operations are guarded by deterministic state transitions to prevent invalid flow jumps.
+
+## HTTP API wrapper (for rapid deployment / Codespaces)
+
+A minimal FastAPI adapter is available at `entia_mcp/funnel_api.py`.
+
+Run locally:
+
+```bash
+make setup
+make run-funnel-api
+```
+
+Core endpoints:
+
+- `POST /funnel/leads`
+- `POST /funnel/{journey_id}/pre-audit`
+- `POST /funnel/{journey_id}/otp/request`
+- `POST /funnel/{journey_id}/otp/verify`
+- `POST /funnel/{journey_id}/checkout`
+- `POST /funnel/{journey_id}/payment`
+- `POST /funnel/{journey_id}/authorize-audit`
+- `GET /funnel/{journey_id}/events`
+- `GET /health`

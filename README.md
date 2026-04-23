@@ -119,6 +119,20 @@ tools = build_entia_tools()
 | + 6 more | Healthcare, economic intelligence |
 
 
+
+## One-click local run (Codespaces / Linux server)
+
+If you need to run the funnel backend immediately:
+
+```bash
+make setup
+make run-funnel-api
+```
+
+This starts the API on `http://localhost:3000` with:
+- `GET /health`
+- funnel endpoints under `/funnel/...` (lead creation, pre-audit, OTP, checkout, payment, audit authorization, events).
+
 ## Funnel Web Orchestration (Lead → OTP → Payment → Route)
 
 The package includes a backend orchestration module for ENTIA funnel flows:
