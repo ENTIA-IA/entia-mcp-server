@@ -126,7 +126,8 @@ The package includes a backend orchestration module for ENTIA funnel flows:
 - `entia_mcp.funnel.FunnelService`
 - deterministic lead/journey states
 - idempotent event stream for dashboard observability
-- OTP verification gate before checkout/audit authorization
+- signed OTP + verification gate before checkout/audit authorization
+- OTP rate-limiting keyed by IP + email + session
 - final route decision (`pyme`, `advertiser`, `enterprise`, `unknown_review`)
 
 See `docs/funnel-web-implementation.md` for event taxonomy and integration notes.

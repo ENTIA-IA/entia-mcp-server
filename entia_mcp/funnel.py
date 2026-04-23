@@ -1,20 +1,9 @@
-"""Deterministic lead journey orchestration for ENTIA funnel workflows.
-
-This module implements the business-state backbone requested in the migration brief:
-- lead creation and journey IDs
-- pre-audit classification
-- OTP gating before full audit
-- payment and authorization states
-- final routing (pyme / advertiser / enterprise)
-- auditable, idempotent event tracking
-
-The implementation is intentionally provider-agnostic so product teams can wire
-real infrastructure (DB, payment gateway, email service, dashboard sink) without
-rewriting state transitions.
-"""
+"""Deterministic lead journey orchestration for ENTIA funnel workflows."""
 
 from __future__ import annotations
 
+import hmac
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -32,8 +21,8 @@ class LeadStatus(str, Enum):
     checkout_started = "checkout_started"
     payment_success = "payment_success"
     payment_failed = "payment_failed"
+    payment_abandoned = "payment_abandoned"
     audit_authorized = "audit_authorized"
-    audit_running = "audit_running"
     routed = "routed"
     abandoned = "abandoned"
 
@@ -65,9 +54,16 @@ class FunnelEvent:
     context: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class OTPChallenge:
+    code: str
+    token: str
+
+
 @dataclass
 class OTPState:
     code_hash: str
+    token: str
     expires_at: datetime
     attempts: int = 0
     resend_count: int = 0
@@ -98,15 +94,40 @@ class FunnelStateError(ValueError):
     """Raised when a transition violates deterministic funnel state rules."""
 
 
+class FunnelValidationError(ValueError):
+    """Raised when input payload is malformed or disallowed."""
+
+
 class FunnelService:
     """In-memory deterministic journey manager with idempotent event registry."""
 
-    def __init__(self, otp_ttl_minutes: int = 10, otp_max_resends: int = 3) -> None:
+    _DOMAIN_RE = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[A-Za-z]{2,}$")
+    _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+    def __init__(
+        self,
+        *,
+        otp_ttl_minutes: int = 10,
+        otp_max_resends: int = 3,
+        otp_rate_limit_window_minutes: int = 10,
+        otp_max_requests_per_window: int = 5,
+        otp_signing_secret: str = "entia-dev-secret",
+        blocked_email_domains: set[str] | None = None,
+    ) -> None:
         self.otp_ttl_minutes = otp_ttl_minutes
         self.otp_max_resends = otp_max_resends
+        self.otp_rate_limit_window_minutes = otp_rate_limit_window_minutes
+        self.otp_max_requests_per_window = otp_max_requests_per_window
+        self.otp_signing_secret = otp_signing_secret
+        self.blocked_email_domains = blocked_email_domains or {
+            "mailinator.com",
+            "guerrillamail.com",
+            "10minutemail.com",
+        }
         self._journeys: dict[str, LeadJourney] = {}
         self._event_fingerprints: set[str] = set()
         self._events: list[FunnelEvent] = []
+        self._otp_request_counters: dict[str, list[datetime]] = {}
 
     @staticmethod
     def _now() -> datetime:
@@ -120,9 +141,25 @@ class FunnelService:
     def _route_from_pre_audit(priority_score: int, fit_segment: str) -> RouteToHome:
         if fit_segment in {"enterprise", "unknown_review"}:
             return RouteToHome.enterprise if fit_segment == "enterprise" else RouteToHome.unknown_review
-        if fit_segment == "advertiser" or priority_score >= 75:
+        if fit_segment in {"advertiser", "agency"} or priority_score >= 75:
             return RouteToHome.advertiser
         return RouteToHome.pyme
+
+    def _sign_otp_token(self, *, journey_id: str, email: str, code_hash: str, expires_at: datetime) -> str:
+        payload = f"{journey_id}:{email}:{code_hash}:{int(expires_at.timestamp())}"
+        return hmac.new(self.otp_signing_secret.encode("utf-8"), payload.encode("utf-8"), sha256).hexdigest()
+
+    def _validate_domain_and_email(self, domain: str, email: str) -> tuple[str, str]:
+        domain_norm = domain.lower().strip()
+        email_norm = email.lower().strip()
+        if not self._DOMAIN_RE.match(domain_norm):
+            raise FunnelValidationError("Invalid domain format")
+        if not self._EMAIL_RE.match(email_norm):
+            raise FunnelValidationError("Invalid email format")
+        email_domain = email_norm.split("@", 1)[1]
+        if email_domain in self.blocked_email_domains:
+            raise FunnelValidationError("Disposable email domains are blocked")
+        return domain_norm, email_norm
 
     def _record_event(self, journey_id: str, event_name: str, context: dict[str, Any] | None = None) -> None:
         payload = context or {}
@@ -131,13 +168,21 @@ class FunnelService:
             return
         self._event_fingerprints.add(fingerprint)
         self._events.append(
-            FunnelEvent(
-                journey_id=journey_id,
-                name=event_name,
-                timestamp=self._now(),
-                context=payload,
-            )
+            FunnelEvent(journey_id=journey_id, name=event_name, timestamp=self._now(), context=payload)
         )
+
+    def _rate_limit_key(self, journey: LeadJourney) -> str:
+        return f"{journey.ip_address or 'ip:unknown'}|{journey.email}|{journey.session_id or 'session:unknown'}"
+
+    def _enforce_otp_rate_limit(self, journey: LeadJourney) -> None:
+        key = self._rate_limit_key(journey)
+        now = self._now()
+        window_start = now - timedelta(minutes=self.otp_rate_limit_window_minutes)
+        timestamps = [ts for ts in self._otp_request_counters.get(key, []) if ts >= window_start]
+        if len(timestamps) >= self.otp_max_requests_per_window:
+            raise FunnelStateError("OTP rate limit exceeded")
+        timestamps.append(now)
+        self._otp_request_counters[key] = timestamps
 
     def get_journey(self, journey_id: str) -> LeadJourney:
         if journey_id not in self._journeys:
@@ -158,11 +203,12 @@ class FunnelService:
         ip_address: str | None = None,
         session_id: str | None = None,
     ) -> LeadJourney:
+        domain_norm, email_norm = self._validate_domain_and_email(domain, email)
         journey_id = str(uuid4())
         journey = LeadJourney(
             journey_id=journey_id,
-            domain=domain.lower().strip(),
-            email=email.lower().strip(),
+            domain=domain_norm,
+            email=email_norm,
             cif=cif,
             ip_address=ip_address,
             session_id=session_id,
@@ -203,20 +249,31 @@ class FunnelService:
         )
         return journey
 
-    def request_otp(self, journey_id: str) -> tuple[LeadJourney, str]:
+    def request_otp(self, journey_id: str) -> tuple[LeadJourney, OTPChallenge]:
         journey = self.get_journey(journey_id)
         if journey.lead_status not in {LeadStatus.pre_audited, LeadStatus.otp_pending}:
             raise FunnelStateError("OTP can only be requested after pre-audit")
-
         if journey.otp and journey.otp.resend_count >= self.otp_max_resends:
             raise FunnelStateError("Maximum OTP resends exceeded")
 
+        self._enforce_otp_rate_limit(journey)
+
         otp_value = f"{randbelow(1_000_000):06d}"
         now = self._now()
+        expires_at = now + timedelta(minutes=self.otp_ttl_minutes)
+        code_hash = self._hash(otp_value)
+        token = self._sign_otp_token(
+            journey_id=journey.journey_id,
+            email=journey.email,
+            code_hash=code_hash,
+            expires_at=expires_at,
+        )
         resend_count = journey.otp.resend_count + 1 if journey.otp else 0
+
         journey.otp = OTPState(
-            code_hash=self._hash(otp_value),
-            expires_at=now + timedelta(minutes=self.otp_ttl_minutes),
+            code_hash=code_hash,
+            token=token,
+            expires_at=expires_at,
             resend_count=resend_count,
         )
         journey.lead_status = LeadStatus.otp_pending
@@ -227,22 +284,21 @@ class FunnelService:
         if resend_count:
             self._record_event(journey_id, "otp_resent", {"resend_count": resend_count})
 
-        return journey, otp_value
+        return journey, OTPChallenge(code=otp_value, token=token)
 
-    def verify_otp(self, journey_id: str, submitted_code: str) -> LeadJourney:
+    def verify_otp(self, journey_id: str, *, submitted_code: str, submitted_token: str) -> LeadJourney:
         journey = self.get_journey(journey_id)
         otp_state = journey.otp
         if not otp_state:
             raise FunnelStateError("No OTP requested")
         if otp_state.verified:
             return journey
-
         if self._now() > otp_state.expires_at:
             self._record_event(journey_id, "otp_expired", {})
             raise FunnelStateError("OTP expired")
 
         otp_state.attempts += 1
-        if self._hash(submitted_code) != otp_state.code_hash:
+        if submitted_token != otp_state.token or self._hash(submitted_code) != otp_state.code_hash:
             self._record_event(journey_id, "otp_failed", {"attempt": otp_state.attempts})
             raise FunnelStateError("Invalid OTP")
 
@@ -280,13 +336,39 @@ class FunnelService:
             self._record_event(journey_id, "payment_failed", {"provider_ref": provider_ref})
         return journey
 
-    def authorize_audit(self, journey_id: str, *, internal_override: bool = False) -> LeadJourney:
+    def abandon_checkout(self, journey_id: str, *, reason: str) -> LeadJourney:
         journey = self.get_journey(journey_id)
-        if not internal_override and journey.lead_status != LeadStatus.payment_success:
-            raise FunnelStateError("Audit requires successful payment unless internal override is enabled")
+        if journey.lead_status != LeadStatus.checkout_started:
+            raise FunnelStateError("Checkout can only be abandoned from checkout_started")
+        journey.payment_status = "abandoned"
+        journey.lead_status = LeadStatus.payment_abandoned
+        self._record_event(journey_id, "payment_abandoned", {"reason": reason})
+        return journey
+
+    def authorize_audit(self, journey_id: str, *, internal_override: bool = False, allow_b2b_deferred: bool = True) -> LeadJourney:
+        journey = self.get_journey(journey_id)
+        allowed = journey.lead_status == LeadStatus.payment_success
+        if allow_b2b_deferred and journey.checkout_mode == "b2b_deferred" and journey.lead_status in {
+            LeadStatus.checkout_started,
+            LeadStatus.payment_abandoned,
+        }:
+            allowed = True
+        if internal_override:
+            allowed = True
+
+        if not allowed:
+            raise FunnelStateError("Audit requires payment success, approved B2B deferred mode, or internal override")
 
         journey.lead_status = LeadStatus.audit_authorized
-        self._record_event(journey_id, "audit_authorized", {"internal_override": internal_override})
+        self._record_event(
+            journey_id,
+            "audit_authorized",
+            {
+                "internal_override": internal_override,
+                "allow_b2b_deferred": allow_b2b_deferred,
+                "checkout_mode": journey.checkout_mode,
+            },
+        )
         return journey
 
     def complete_audit(self, journey_id: str, *, route_to_home: RouteToHome) -> LeadJourney:
@@ -300,6 +382,15 @@ class FunnelService:
         self._record_event(journey_id, "route_to_home", {"route_to_home": route_to_home.value})
         return journey
 
+    def mark_otp_abandoned(self, journey_id: str, *, reason: str) -> LeadJourney:
+        journey = self.get_journey(journey_id)
+        if journey.lead_status != LeadStatus.otp_pending:
+            raise FunnelStateError("OTP abandonment requires otp_pending")
+        self._record_event(journey_id, "otp_abandoned", {"reason": reason})
+        journey.lead_status = LeadStatus.abandoned
+        journey.journey_stage = JourneyStage.dropped
+        return journey
+
     def mark_dropoff(self, journey_id: str, *, reason: str) -> LeadJourney:
         journey = self.get_journey(journey_id)
         journey.lead_status = LeadStatus.abandoned
@@ -309,8 +400,4 @@ class FunnelService:
 
     def record_chatbot_interaction(self, journey_id: str, *, intent: str, resolution: str) -> None:
         self.get_journey(journey_id)
-        self._record_event(
-            journey_id,
-            "chatbot_interaction",
-            {"intent": intent, "resolution": resolution},
-        )
+        self._record_event(journey_id, "chatbot_interaction", {"intent": intent, "resolution": resolution})

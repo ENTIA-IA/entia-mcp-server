@@ -5,9 +5,11 @@ from entia_mcp.funnel import (
     FunnelEvent,
     FunnelService,
     FunnelStateError,
+    FunnelValidationError,
     JourneyStage,
     LeadJourney,
     LeadStatus,
+    OTPChallenge,
     RouteToHome,
 )
 
@@ -18,8 +20,10 @@ __all__ = [
     "FunnelEvent",
     "FunnelService",
     "FunnelStateError",
+    "FunnelValidationError",
     "JourneyStage",
     "LeadJourney",
     "LeadStatus",
+    "OTPChallenge",
     "RouteToHome",
 ]

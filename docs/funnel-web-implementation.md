@@ -18,8 +18,10 @@ This repository now includes a deterministic backend orchestration module for th
   - `priority_score`
 - OTP workflow with:
   - 6-digit codes
+  - signed OTP token (HMAC)
   - default 10-minute expiration
   - resend limits
+  - rate limiting by IP + email + session window
   - stateful verification gate before checkout/audit
 - Payment and audit authorization transitions.
 - Deterministic final route:
@@ -41,12 +43,14 @@ This repository now includes a deterministic backend orchestration module for th
   - `otp_verified`
   - `otp_failed`
   - `otp_expired`
+  - `otp_abandoned`
 - Checkout / payment:
   - `checkout_started`
   - `checkout_viewed`
   - `payment_attempted`
   - `payment_success`
   - `payment_failed`
+  - `payment_abandoned`
 - Audit / routing:
   - `audit_authorized`
   - `audit_completed`
@@ -66,3 +70,11 @@ This module is provider-agnostic by design. In production, wire it to:
 - internal dashboard sink
 
 No secrets are handled in frontend code; OTP/payment/audit orchestration is intended for backend execution only.
+
+
+## Input validation and safety guardrails
+
+- Domain format is validated before journey creation.
+- Email format is validated before journey creation.
+- Disposable email domains are blocked by default (configurable).
+- OTP and payment operations are guarded by deterministic state transitions to prevent invalid flow jumps.
