@@ -118,6 +118,19 @@ tools = build_entia_tools()
 | `get_platform_stats` | Registry size and data coverage |
 | + 6 more | Healthcare, economic intelligence |
 
+
+## Funnel Web Orchestration (Lead → OTP → Payment → Route)
+
+The package includes a backend orchestration module for ENTIA funnel flows:
+
+- `entia_mcp.funnel.FunnelService`
+- deterministic lead/journey states
+- idempotent event stream for dashboard observability
+- OTP verification gate before checkout/audit authorization
+- final route decision (`pyme`, `advertiser`, `enterprise`, `unknown_review`)
+
+See `docs/funnel-web-implementation.md` for event taxonomy and integration notes.
+
 ## Pricing
 
 | Tier | Price | Requests | Overage |
