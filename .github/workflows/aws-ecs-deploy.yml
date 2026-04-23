@@ -2,12 +2,6 @@ name: AWS MCP Deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
-    paths:
-      - "infra/aws/**"
-      - ".github/workflows/aws-ecs-deploy.yml"
-      - "README.md"
 
 permissions:
   id-token: write
@@ -91,6 +85,14 @@ jobs:
       - name: Terraform init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init
+
+      - name: Terraform fmt check
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
 
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
