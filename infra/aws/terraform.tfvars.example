@@ -1,0 +1,25 @@
+aws_region         = "us-east-1"
+project            = "entia-mcp"
+environment        = "prod"
+vpc_id             = "vpc-xxxxxxxx"
+public_subnet_ids  = ["subnet-public-a", "subnet-public-b"]
+private_subnet_ids = ["subnet-private-a", "subnet-private-b"]
+certificate_arn    = "arn:aws:acm:us-east-1:123456789012:certificate/xxxx"
+
+create_dns_record = true
+hosted_zone_id    = "ZXXXXXXXXXXXX"
+domain_name       = "mcp.entia.systems"
+
+container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/entia-mcp-prod-mcp:latest"
+
+additional_environment = {
+  LOG_LEVEL = "info"
+}
+
+secret_arns = {
+  ENTIA_API_KEY = "arn:aws:secretsmanager:us-east-1:123456789012:secret:entia-api-key"
+}
+
+tags = {
+  Owner = "entia-core"
+}
