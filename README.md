@@ -1,5 +1,6 @@
 # ENTIA MCP Server
 
+[![SafeSkill 93/100](https://img.shields.io/badge/SafeSkill-93%2F100_Verified%20Safe-brightgreen)](https://safeskill.dev/scan/entia-ia-entia-mcp-server)
 **Structured business intelligence for AI agents.**
 
 ENTIA provides verified entity data across 34 countries — accessible via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) or REST API.
