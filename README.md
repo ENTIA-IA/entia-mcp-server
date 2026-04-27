@@ -25,7 +25,7 @@ No installation needed. Connect your MCP client directly:
   "mcpServers": {
     "entia": {
       "command": "npx",
-      "args": ["mcp-remote", "https://entia.systems/mcp/"]
+      "args": ["mcp-remote", "https://mcp.entia.systems/mcp"]
     }
   }
 }
@@ -37,7 +37,7 @@ No installation needed. Connect your MCP client directly:
   "mcpServers": {
     "entia": {
       "command": "npx",
-      "args": ["mcp-remote", "https://entia.systems/mcp/"]
+      "args": ["mcp-remote", "https://mcp.entia.systems/mcp"]
     }
   }
 }
@@ -65,58 +65,21 @@ curl "https://entia.systems/v1/verify/vat/ESA28015865"
 curl "https://entia.systems/v1/stats"
 ```
 
-### Option 3: Python Client
+### Option 3: Python SDK (coming soon)
 
-```bash
-pip install entia-mcp
-```
+A Python client (`entia-mcp` on PyPI) and LangChain integration are on the
+roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
 
-```python
-from entia_mcp import EntiaClient
-
-client = EntiaClient(api_key="entia_live_...")
-
-# Search
-results = client.search("dental clinic", country="ES", limit=5)
-
-# Profile
-profile = client.profile("Telefonica", country="ES")
-print(profile["trust_score"])  # {"score": 84, "badge": "PARTIAL"}
-
-# VAT verification
-vat = client.verify_vat("ESA28015865")
-print(vat["valid"])  # True
-```
-
-### Option 4: LangChain Integration
-
-```python
-from entia_mcp.langchain import build_entia_tools
-
-tools = build_entia_tools()
-# Returns: [entia_search, entia_profile, entia_health]
-# Ready for create_tool_calling_agent()
-```
-
-## 20 MCP Tools
+## 6 MCP Tools
 
 | Tool | What it does |
 |---|---|
-| `entity_lookup` | Full entity dossier from 5.5M verified entities |
+| `entity_lookup` | Verify identity of any business across 34 countries (5.5M entities) |
 | `search_entities` | Browse registry by name, sector, city, country |
-| `borme_lookup` | 40.3M Spanish mercantile acts (2009-2026) |
-| `borme_new_constitutions` | Newly formed companies feed |
-| `borme_officer_changes` | Director appointments/removals (KYC/KYB) |
-| `verify_healthcare_professional` | 523K professionals (REPS) |
-| `verify_dentist` | 44K colegiados (Consejo General Dentistas) |
-| `verify_psychologist` | Colegiados (COP) |
-| `search_regcess` | 120K healthcare centers |
+| `borme_lookup` | Spanish mercantile acts (40.3M, 2009-2026) |
 | `verify_vat` | EU VAT via VIES (27 member states) |
-| `zone_profile` | Socioeconomic data by postal code (INE/SEPE/AEAT) |
-| `get_competitors` | Competitors in same sector and location |
-| `municipality_profile` | Population + CNAE distribution |
-| `get_platform_stats` | Registry size and data coverage |
-| + 6 more | Healthcare, economic intelligence |
+| `zone_profile` | Spanish socioeconomic data by postal code (INE/SEPE/AEAT) |
+| `get_competitors` | Competitors in same sector and city |
 
 ## Pricing
 
