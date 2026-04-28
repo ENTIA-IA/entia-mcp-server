@@ -98,25 +98,16 @@ tools = build_entia_tools()
 # Ready for create_tool_calling_agent()
 ```
 
-## 20 MCP Tools
+## 6 MCP Tools
 
 | Tool | What it does |
 |---|---|
 | `entity_lookup` | Full entity dossier from 5.5M verified entities |
 | `search_entities` | Browse registry by name, sector, city, country |
 | `borme_lookup` | 40.3M Spanish mercantile acts (2009-2026) |
-| `borme_new_constitutions` | Newly formed companies feed |
-| `borme_officer_changes` | Director appointments/removals (KYC/KYB) |
-| `verify_healthcare_professional` | 523K professionals (REPS) |
-| `verify_dentist` | 44K colegiados (Consejo General Dentistas) |
-| `verify_psychologist` | Colegiados (COP) |
-| `search_regcess` | 120K healthcare centers |
 | `verify_vat` | EU VAT via VIES (27 member states) |
 | `zone_profile` | Socioeconomic data by postal code (INE/SEPE/AEAT) |
 | `get_competitors` | Competitors in same sector and location |
-| `municipality_profile` | Population + CNAE distribution |
-| `get_platform_stats` | Registry size and data coverage |
-| + 6 more | Healthcare, economic intelligence |
 
 ## Pricing
 
