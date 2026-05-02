@@ -10,7 +10,7 @@ ENTIA provides verified entity data across 34 countries — accessible via [Mode
 | Countries | 34 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
-| MCP tools | 20 |
+| MCP tools | 6 |
 | REST endpoints | 4 |
 
 ## Quick Start (< 2 minutes)
@@ -85,12 +85,15 @@ roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
 
 | Tier | Price | Requests | Overage |
 |---|---|---|---|
-| Free | EUR 0 | 20/day | Hard block |
-| Pro | EUR 199/month | 1,000/month | EUR 0.15/req |
-| Scale | EUR 990/month | 10,000/month | EUR 0.10/req |
-| Enterprise | EUR 2,500/month | 100,000/month | EUR 0.05/req |
+| TRACE | Free | 5/day | Hard block |
+| SIGNAL | EUR 7.99/month | 500/month | Hard block |
+| BUILD | EUR 39/month | 2,500/month | Hard block |
+| INTEGRATE | EUR 149/month | 10,000/month | EUR 0.15/req |
+| OPERATE | EUR 799/month | 100,000/month | EUR 0.10/req |
+| SCALE | EUR 2,500/month | 500,000/month | EUR 0.05/req |
+| ENTERPRISE | Custom | Unlimited | — |
 
-Get your API key: [entia.systems/get-started](https://entia.systems/get-started)
+Get your API key: [entia.systems/mcp-setup](https://entia.systems/mcp-setup)
 
 ## Data Sources
 
@@ -110,7 +113,7 @@ All data comes from official public registries:
 ## Links
 
 - [API Documentation](https://entia.systems/mcp-docs)
-- [Get API Key](https://entia.systems/get-started)
+- [Get API Key](https://entia.systems/mcp-setup)
 - [Setup Guide](https://entia.systems/mcp-setup)
 - [Client Dashboard](https://entia.systems/mcp-dashboard)
 - [Official MCP Registry](https://registry.modelcontextprotocol.io)
