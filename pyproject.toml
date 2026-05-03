@@ -17,18 +17,21 @@ dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.7.0",
     "pydantic-settings>=2.2.1",
+    "mcp>=1.8.0",
 ]
 
 [project.optional-dependencies]
-mcp = ["mcp>=1.8.0"]
 langchain = ["langchain-core>=0.3.0"]
-all = ["mcp>=1.8.0", "langchain-core>=0.3.0"]
+all = ["langchain-core>=0.3.0"]
+
+[project.scripts]
+entia-mcp-server = "entia_mcp.server:main"
 
 [project.urls]
 Homepage = "https://entia.systems"
 Documentation = "https://entia.systems/mcp-docs"
 Repository = "https://github.com/ENTIA-IA/entia-mcp-server"
-"Get API Key" = "https://entia.systems/get-started"
+"Get API Key" = "https://entia.systems/mcp-setup"
 
 [tool.setuptools]
 packages = ["entia_mcp"]

@@ -10,7 +10,7 @@ ENTIA provides verified entity data across 34 countries — accessible via [Mode
 | Countries | 34 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
-| MCP tools | 20 |
+| MCP tools | 6 |
 | REST endpoints | 4 |
 
 ## Quick Start (< 2 minutes)
@@ -25,7 +25,7 @@ No installation needed. Connect your MCP client directly:
   "mcpServers": {
     "entia": {
       "command": "npx",
-      "args": ["mcp-remote", "https://entia.systems/mcp/"]
+      "args": ["mcp-remote", "https://mcp.entia.systems/mcp"]
     }
   }
 }
@@ -37,7 +37,7 @@ No installation needed. Connect your MCP client directly:
   "mcpServers": {
     "entia": {
       "command": "npx",
-      "args": ["mcp-remote", "https://entia.systems/mcp/"]
+      "args": ["mcp-remote", "https://mcp.entia.systems/mcp"]
     }
   }
 }
@@ -65,44 +65,16 @@ curl "https://entia.systems/v1/verify/vat/ESA28015865"
 curl "https://entia.systems/v1/stats"
 ```
 
-### Option 3: Python Client
+### Option 3: Python SDK (coming soon)
 
-```bash
-pip install entia-mcp
-```
-
-```python
-from entia_mcp import EntiaClient
-
-client = EntiaClient(api_key="entia_live_...")
-
-# Search
-results = client.search("dental clinic", country="ES", limit=5)
-
-# Profile
-profile = client.profile("Telefonica", country="ES")
-print(profile["trust_score"])  # {"score": 84, "badge": "PARTIAL"}
-
-# VAT verification
-vat = client.verify_vat("ESA28015865")
-print(vat["valid"])  # True
-```
-
-### Option 4: LangChain Integration
-
-```python
-from entia_mcp.langchain import build_entia_tools
-
-tools = build_entia_tools()
-# Returns: [entia_search, entia_profile, entia_health]
-# Ready for create_tool_calling_agent()
-```
+A Python client (`entia-mcp` on PyPI) and LangChain integration are on the
+roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
 
 ## 6 MCP Tools
 
 | Tool | What it does |
 |---|---|
-| `entity_lookup` | Full entity dossier from 5.5M verified entities |
+| `entity_lookup` | Verify identity of any business across 34 countries (5.5M entities) |
 | `search_entities` | Browse registry by name, sector, city, country |
 | `borme_lookup` | 40.3M Spanish mercantile acts (2009-2026) |
 | `verify_vat` | EU VAT via VIES (27 member states) |
@@ -113,12 +85,15 @@ tools = build_entia_tools()
 
 | Tier | Price | Requests | Overage |
 |---|---|---|---|
-| Free | EUR 0 | 20/day | Hard block |
-| Pro | EUR 199/month | 1,000/month | EUR 0.15/req |
-| Scale | EUR 990/month | 10,000/month | EUR 0.10/req |
-| Enterprise | EUR 2,500/month | 100,000/month | EUR 0.05/req |
+| TRACE | Free | 5/day | Hard block |
+| SIGNAL | EUR 7.99/month | 500/month | Hard block |
+| BUILD | EUR 39/month | 2,500/month | Hard block |
+| INTEGRATE | EUR 149/month | 10,000/month | EUR 0.15/req |
+| OPERATE | EUR 799/month | 100,000/month | EUR 0.10/req |
+| SCALE | EUR 2,500/month | 500,000/month | EUR 0.05/req |
+| ENTERPRISE | Custom | Unlimited | — |
 
-Get your API key: [entia.systems/get-started](https://entia.systems/get-started)
+Get your API key: [entia.systems/mcp-setup](https://entia.systems/mcp-setup)
 
 ## Data Sources
 
@@ -138,7 +113,7 @@ All data comes from official public registries:
 ## Links
 
 - [API Documentation](https://entia.systems/mcp-docs)
-- [Get API Key](https://entia.systems/get-started)
+- [Get API Key](https://entia.systems/mcp-setup)
 - [Setup Guide](https://entia.systems/mcp-setup)
 - [Client Dashboard](https://entia.systems/mcp-dashboard)
 - [Official MCP Registry](https://registry.modelcontextprotocol.io)

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "entia-systems-core"
+  ],
+  "env": [
+    {
+      "name": "ENTIA_API_KEY",
+      "description": "ENTIA API key (entia_live_...). Get yours free at https://entia.systems/mcp-setup",
+      "required": true
+    }
+  ]
+}
