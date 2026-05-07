@@ -76,10 +76,10 @@ roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
 |---|---|
 | `entity_lookup` | Verify identity of any business across 34 countries (5.5M entities) |
 | `search_entities` | Browse registry by name, sector, city, country |
-| `borme_lookup` | Spanish mercantile acts (40.3M, 2009-2026) |
+| `borme_lookup` | 40.3M Spanish mercantile acts (2009-2026) |
 | `verify_vat` | EU VAT via VIES (27 member states) |
-| `zone_profile` | Spanish socioeconomic data by postal code (INE/SEPE/AEAT) |
-| `get_competitors` | Competitors in same sector and city |
+| `zone_profile` | Socioeconomic data by postal code (INE/SEPE/AEAT) |
+| `get_competitors` | Competitors in same sector and location |
 
 ## Pricing
 
