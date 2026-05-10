@@ -167,6 +167,23 @@ aws logs tail /ecs/entia-mcp-ts-staging --region eu-west-1 --since 30m
 
 ---
 
+## Deuda técnica conocida (resolver ANTES del switch DNS, NO antes del smoke)
+
+El secret `entia/mcp-ts/api-key` actualmente comparte la string con `ENTIA_MCP_INTERNAL_KEY` del API gateway production. Es la decisión consciente para no rotar mid-smoke (rotar ahora invalida la task ECS que el owner está testeando). La deuda está completamente documentada en:
+
+→ **[docs/KEY_ROTATION_PRE_SWITCH_2026-05-10.md](./KEY_ROTATION_PRE_SWITCH_2026-05-10.md)** (commit `fc3f9be`)
+
+El runbook contiene:
+- Hallazgos de la investigación previa (la tabla DDB `entia_mcp_auth` documentada en CLAUDE.md no existe; la real es `entia_mcp_api_keys`).
+- 2 caminos posibles para key dedicada (A: internal bypass nuevo; B: tier comercial DDB).
+- Pregunta sin resolver §3: cómo el gateway valida la key compartida hoy.
+- Runbook ejecutable paso a paso para ambos caminos.
+- Pre-condiciones explícitas: smoke 4/4 PASS + owner elige A o B + §3 resuelto.
+
+**Secuencia oficial:** smoke hoy con key compartida → tomar 4/4 PASS como gate → mañana resolver §3 + rotar key + smoke breve post-rotación → autorizar plan switch DNS. Switch DNS NO se ejecuta hasta que la rotación esté hecha y verificada.
+
+---
+
 ## Anexo — Bloqueantes operativos a tener en cuenta durante los tests
 
 | Bloqueante | Detalle |
