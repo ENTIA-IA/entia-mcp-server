@@ -100,7 +100,7 @@ function extractErrorType(msg: string): string {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'entia-mcp-server',
-    version: '1.0.4',
+    version: '1.0.6',
     icons: [
       {
         src: 'https://entia.systems/favicon-192x192.png',
