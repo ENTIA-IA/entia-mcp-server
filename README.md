@@ -10,7 +10,7 @@ ENTIA provides verified entity data across 34 countries — accessible via [Mode
 | Countries | 34 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
-| MCP tools | 6 |
+| MCP tools | 8 |
 | REST endpoints | 4 |
 
 ## Quick Start (< 2 minutes)
@@ -70,27 +70,32 @@ curl "https://entia.systems/v1/stats"
 A Python client (`entia-mcp` on PyPI) and LangChain integration are on the
 roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
 
-## 6 MCP Tools
+## 8 MCP Tools
 
 | Tool | What it does |
 |---|---|
-| `entity_lookup` | Verify identity of any business across 34 countries (5.5M entities) |
+| `entity_lookup` | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME + VIES + GLEIF + OFAC. 5.5M entities, 34 countries |
 | `search_entities` | Browse registry by name, sector, city, country |
-| `borme_lookup` | Spanish mercantile acts (40.3M, 2009-2026) |
-| `verify_vat` | EU VAT via VIES (27 member states) |
-| `zone_profile` | Spanish socioeconomic data by postal code (INE/SEPE/AEAT) |
+| `borme_lookup` | Spanish mercantile acts (40.3M, 2009-2026) — directors, officers, constitutions |
+| `verify_vat` | EU VAT real-time via VIES (27 member states) |
+| `zone_profile` | Spanish socioeconomic data by postal code (INE/SEPE/AEAT) — income, unemployment, business density |
 | `get_competitors` | Competitors in same sector and city |
+| `ai_ready_profile` | JSON-LD @graph + enrichment for an entity (KYB-ready payload for AI agents) |
+| `get_showcase` | Curated enriched showcase entities (demo / discovery) |
 
 ## Pricing
 
+Free tier: **100 requests/day** per IP, no signup. Authoritative pricing is published live at
+[entia.systems/.well-known/ai-pricing.json](https://entia.systems/.well-known/ai-pricing.json).
+
 | Tier | Price | Requests | Overage |
 |---|---|---|---|
-| TRACE | Free | 5/day | Hard block |
-| SIGNAL | EUR 7.99/month | 500/month | Hard block |
-| BUILD | EUR 39/month | 2,500/month | Hard block |
-| INTEGRATE | EUR 149/month | 10,000/month | EUR 0.15/req |
-| OPERATE | EUR 799/month | 100,000/month | EUR 0.10/req |
-| SCALE | EUR 2,500/month | 500,000/month | EUR 0.05/req |
+| TRACE | Free | 100/day | Hard block |
+| SIGNAL | EUR 29/month | 500/month | Hard block |
+| BUILD | EUR 99/month | 2,500/month | Hard block |
+| INTEGRATE | EUR 399/month | 10,000/month | EUR 0.15/req |
+| OPERATE | EUR 1,499/month | 100,000/month | EUR 0.10/req |
+| SCALE | EUR 2,500+/month | 500,000/month | EUR 0.05/req (contact) |
 | ENTERPRISE | Custom | Unlimited | — |
 
 Get your API key: [entia.systems/mcp-setup](https://entia.systems/mcp-setup)

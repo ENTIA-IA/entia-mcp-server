@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "systems.entia/entity-verification",
+  "title": "ENTIA Entity Verification",
+  "description": "52M+ verified business entities across 34 countries. The deepest Spain business intelligence (BORME 40M+ acts, REPS healthcare, IBEX 35) plus VIES, GLEIF, Wikidata, Companies House, INSEE/Sirene, PRH, Brreg. Real-time entity lookup, trust scoring, compliance verification, KYB-ready for AI agents. Free tier: 100 req/day.",
+  "version": "3.6.0",
+  "icon": "https://entia.systems/assets/entia_logo_official.png",
+  "websiteUrl": "https://entia.systems",
+  "repository": {
+    "url": "https://github.com/ENTIA-IA/entia-mcp-server",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.entia.systems/mcp"
+    }
+  ]
+}
