@@ -1,5 +1,11 @@
 # ENTIA MCP Server
 
+> **Production state (canonical source):** `~/Desktop/ENTIA Lanzamiento/docs/MCP_STATE.md`
+> **Switch DNS runbook:** `~/Desktop/ENTIA Lanzamiento/docs/SWITCH_DNS_EXECUTION_2026-05-11.md`
+> **Stack:** TypeScript 5.8 + `@modelcontextprotocol/sdk ^1.12.0` + Node 20
+> **Live image:** `ECR entia-mcp-ts:v1.0.5` (ECS `entia-mcp-ts-staging-cluster`, eu-west-1)
+> **Public endpoint:** `https://mcp.entia.systems/mcp` (no trailing slash)
+
 MCP Server for the [ENTIA](https://entia.systems) entity verification and trust infrastructure platform. Exposes 5.6M+ registered business entities across 34 countries to any MCP-compatible AI agent.
 
 **Data coverage note:** Enrichment depth varies by country. Spain (~900K entities) has full socioeconomic data (INE/SEPE/Hacienda). GB/FR have name+address. GLEIF countries have name+LEI. ~79K entities pass the full Quality Gate. Check `data_coverage` in API responses.
