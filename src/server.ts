@@ -13,6 +13,8 @@ import { getCompetitors, GetCompetitorsSchema } from './tools/get_competitors.js
 import { bormeLookup, BormeLookupSchema } from './tools/borme_lookup.js';
 import { getShowcase, GetShowcaseSchema } from './tools/get_showcase.js';
 import { professionalLookup, ProfessionalLookupSchema } from './tools/professional_lookup.js';
+// v1.0.7 — aggregator tool: 4 sources in parallel, 90+ fields in single response
+import { getFullDossier, FullDossierSchema } from './tools/full_dossier.js';
 import { logToolCall } from './logger.js';
 import { config } from './config.js';
 import { getActiveClient } from './session_store.js';
@@ -297,6 +299,22 @@ export function createServer(): McpServer {
     ProfessionalLookupSchema.shape,
     withLogging('professional_lookup', true, (args) =>
       professionalLookup(args as { query: string })
+    ),
+  );
+
+  // --- Tool 14: get_full_dossier (API key required) — KILLER aggregator ---
+  server.tool(
+    'get_full_dossier',
+    'Return a complete dossier on any company — 90+ fields aggregated from 4 ' +
+    'ENTIA sources in parallel: entity_lookup (identity + trust score + GLEIF + ' +
+    'Wikidata + BORME basic), zone_profile (30+ socioeconomic fields, ES only), ' +
+    'borme_lookup (full BORME mercantile acts, ES only), verify_vat (VIES live, ' +
+    'EU only). Use this for due diligence, KYB, or when the user asks for ' +
+    '"everything about" a company. Single call replaces 4 separate tool calls. ' +
+    'Typical latency 1-3s. API key required.',
+    FullDossierSchema.shape,
+    withLogging('get_full_dossier', true, (args) =>
+      getFullDossier(args as { query: string })
     ),
   );
 
