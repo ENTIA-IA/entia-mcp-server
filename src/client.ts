@@ -37,7 +37,7 @@ export class EntiaClient {
     };
 
     if (this.apiKey) {
-      headers['x-entia-api-key'] = this.apiKey;
+      headers['X-ENTIA-Key'] = this.apiKey;
     } else if (options?.requireAuth) {
       throw new Error('ENTIA_API_KEY required for this tool. Set the ENTIA_API_KEY env var.');
     }
@@ -84,7 +84,7 @@ export class EntiaClient {
       headers: {
         'Accept': 'text/html',
         'User-Agent': 'ENTIA-MCP-Server/1.0',
-        ...(this.apiKey ? { 'x-entia-api-key': this.apiKey } : {}),
+        ...(this.apiKey ? { 'X-ENTIA-Key': this.apiKey } : {}),
       },
       signal: AbortSignal.timeout(config.REQUEST_TIMEOUT_MS),
     });
@@ -139,7 +139,7 @@ export class EntiaClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'User-Agent': 'ENTIA-MCP-Server/1.0',
-        ...(this.apiKey ? { 'x-entia-api-key': this.apiKey } : {}),
+        ...(this.apiKey ? { 'X-ENTIA-Key': this.apiKey } : {}),
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeout),
