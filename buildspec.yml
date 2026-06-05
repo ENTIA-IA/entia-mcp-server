@@ -1,0 +1,80 @@
+version: 0.2
+
+# CodeBuild project for entia-mcp-ts (v1.0.6+)
+# Builds Docker image → pushes ECR → updates ECS task def → rolling deploy.
+#
+# CodeBuild project name: entia-mcp-ts-build
+# Required IAM perms on service role:
+#   - ECR:  GetAuthorizationToken, BatchCheckLayerAvailability,
+#           CompleteLayerUpload, InitiateLayerUpload, PutImage,
+#           UploadLayerPart, DescribeImages
+#   - ECS:  DescribeTaskDefinition, RegisterTaskDefinition, UpdateService,
+#           DescribeServices
+#   - Logs: CreateLogGroup, CreateLogStream, PutLogEvents
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging into ECR...
+      - aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin 267673636179.dkr.ecr.eu-west-1.amazonaws.com
+      - export ECR_REPO=267673636179.dkr.ecr.eu-west-1.amazonaws.com/entia-mcp-ts
+      - export CLUSTER=entia-mcp-ts-staging-cluster
+      - export SERVICE=entia-mcp-ts-staging-service
+      - export TASK_FAMILY=entia-mcp-ts-staging-task
+      - export VERSION=v1.0.6
+  build:
+    commands:
+      - echo Building amd64 image
+      - docker build --platform linux/amd64 -t $ECR_REPO:$VERSION .
+      - docker tag $ECR_REPO:$VERSION $ECR_REPO:latest
+  post_build:
+    commands:
+      - docker push $ECR_REPO:$VERSION
+      - docker push $ECR_REPO:latest
+      - |
+        echo "Getting new image digest..."
+        NEW_DIGEST=$(aws ecr describe-images --repository-name entia-mcp-ts --region eu-west-1 --image-ids imageTag=$VERSION --query 'imageDetails[0].imageDigest' --output text)
+        if [ -z "$NEW_DIGEST" ]; then
+          echo "ERROR: NEW_DIGEST empty. Aborting."
+          exit 1
+        fi
+        echo "New image digest $NEW_DIGEST"
+
+        echo "Registering new task definition..."
+        CURRENT_TD=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY --region eu-west-1 --query 'taskDefinition')
+        NEW_TD=$(echo "$CURRENT_TD" | python3 -c "
+        import sys, json
+        td = json.load(sys.stdin)
+        new_digest = '${NEW_DIGEST}'
+        repo = '267673636179.dkr.ecr.eu-west-1.amazonaws.com/entia-mcp-ts'
+        for c in td['containerDefinitions']:
+            c['image'] = f'{repo}@{new_digest}'
+        keys = ['family','taskRoleArn','executionRoleArn','networkMode','containerDefinitions',
+                'volumes','placementConstraints','requiresCompatibilities','cpu','memory',
+                'tags','runtimePlatform','ephemeralStorage']
+        out = {k: td[k] for k in keys if k in td}
+        print(json.dumps(out))
+        ")
+        echo "$NEW_TD" > /tmp/new_td.json
+        NEW_REVISION=$(aws ecs register-task-definition --region eu-west-1 --cli-input-json file:///tmp/new_td.json --query 'taskDefinition.revision' --output text)
+        echo "Registered revision $NEW_REVISION"
+
+        echo "Updating ECS service..."
+        aws ecs update-service --cluster $CLUSTER --service $SERVICE --task-definition $TASK_FAMILY:$NEW_REVISION --region eu-west-1 --force-new-deployment > /dev/null
+
+        echo "Waiting for stability (max 8min)..."
+        for i in $(seq 1 48); do
+          ROLLOUT=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --region eu-west-1 --query 'services[0].deployments[?status==`PRIMARY`]|[0].rolloutState' --output text)
+          RUNNING=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --region eu-west-1 --query 'services[0].runningCount' --output text)
+          DESIRED=$(aws ecs describe-services --cluster $CLUSTER --services $SERVICE --region eu-west-1 --query 'services[0].desiredCount' --output text)
+          echo "  [$i/48] state=$ROLLOUT running=$RUNNING/$DESIRED"
+          if [ "$ROLLOUT" = "COMPLETED" ]; then
+            echo "Deploy complete: revision $NEW_REVISION"
+            break
+          fi
+          if [ "$ROLLOUT" = "FAILED" ]; then
+            echo "ERROR: rollout failed"
+            exit 1
+          fi
+          sleep 10
+        done

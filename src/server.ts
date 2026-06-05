@@ -5,6 +5,16 @@ import { searchEntities, SearchEntitiesSchema } from './tools/search_entities.js
 import { lookupByDomain, LookupByDomainSchema } from './tools/lookup_by_domain.js';
 import { runRiskAudit, RunRiskAuditSchema } from './tools/run_risk_audit.js';
 import { getPlatformStats } from './tools/get_platform_stats.js';
+// v1.0.6 — 7 tools added (Python ALB → REST /api/v1/v3/* → MCP TS thin proxy)
+import { verifyVat, VerifyVatSchema } from './tools/verify_vat.js';
+import { zoneProfile, ZoneProfileSchema } from './tools/zone_profile.js';
+import { aiReadyProfile, AiReadyProfileSchema } from './tools/ai_ready_profile.js';
+import { getCompetitors, GetCompetitorsSchema } from './tools/get_competitors.js';
+import { bormeLookup, BormeLookupSchema } from './tools/borme_lookup.js';
+import { getShowcase, GetShowcaseSchema } from './tools/get_showcase.js';
+import { professionalLookup, ProfessionalLookupSchema } from './tools/professional_lookup.js';
+// v1.0.7 — aggregator tool: 4 sources in parallel, 90+ fields in single response
+import { getFullDossier, FullDossierSchema } from './tools/full_dossier.js';
 import { logToolCall } from './logger.js';
 import { config } from './config.js';
 import { getActiveClient } from './session_store.js';
@@ -189,7 +199,7 @@ async function withEdgeCache<T>(
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'entia-mcp-server',
-    version: '1.0.5',
+    version: '1.0.7-edge-cache',  # 8+ updates
     icons: [
       {
         src: 'https://entia.systems/favicon-192x192.png',
@@ -289,6 +299,116 @@ export function createServer(): McpServer {
     {},
     withLogging('get_platform_stats', false, (args) =>
       withEdgeCache('get_platform_stats', args || {}, () => getPlatformStats(), 600)
+    ),
+  );
+
+  // ═════════════════════════════════════════════════════════════════════
+  // v1.0.6 — 7 new tools (proxies to api.entia.systems/api/v1/v3/*)
+  // ═════════════════════════════════════════════════════════════════════
+
+  // --- Tool 7: verify_vat (API key required) ---
+  server.tool(
+    'verify_vat',
+    'Real-time EU VAT validation via VIES (27 countries). Accepts VAT number ' +
+    'with country prefix (ESA28015865) or bare (A28015865). Returns {valid, ' +
+    'name, address, country}. API key required.',
+    VerifyVatSchema.shape,
+    withLogging('verify_vat', true, (args) =>
+      verifyVat(args as { q: string })
+    ),
+  );
+
+  // --- Tool 8: zone_profile (API key required) ---
+  server.tool(
+    'zone_profile',
+    'Socioeconomic profile of a Spanish postal code. Returns ~17 blocks: income ' +
+    '(AEAT — Hacienda), employment (SEPE), demographics (INE Padrón), business ' +
+    'census (DIRCE), real estate (€/m²), digital infrastructure (FTTH coverage), ' +
+    'poverty/inequality (Gini, S80/S20), tourism demand (EOAC/EOAP). ' +
+    'Spain only — UK/FR/etc. return empty. API key required.',
+    ZoneProfileSchema.shape,
+    withLogging('zone_profile', true, (args) =>
+      zoneProfile(args as { postal_code: string })
+    ),
+  );
+
+  // --- Tool 9: ai_ready_profile (API key required) ---
+  server.tool(
+    'ai_ready_profile',
+    'Full AI-ready JSON-LD profile for any entity. 4-node @graph (Organization, ' +
+    'Place, LocalBusiness, PostalAddress) with verification flags and territorial ' +
+    'data. Designed for direct citation by AI agents. API key required.',
+    AiReadyProfileSchema.shape,
+    withLogging('ai_ready_profile', true, (args) =>
+      aiReadyProfile(args as { query: string })
+    ),
+  );
+
+  // --- Tool 10: get_competitors (API key required) ---
+  server.tool(
+    'get_competitors',
+    'Find real competitors in the same sector and geography from the 5.2M ENTIA ' +
+    'verified corpus. Returns ranked entities with identity, location, and sector ' +
+    'matching. Use entia-competitive-analysis skill for workflow guidance. ' +
+    'API key required.',
+    GetCompetitorsSchema.shape,
+    withLogging('get_competitors', true, (args) =>
+      getCompetitors(args as { sector: string; city: string; limit: number })
+    ),
+  );
+
+  // --- Tool 11: borme_lookup (API key required) ---
+  server.tool(
+    'borme_lookup',
+    'Full BORME corporate history (Boletín Oficial del Registro Mercantil de ' +
+    'España). Returns mercantile acts (constituciones, officer changes, capital ' +
+    'changes, concursal proceedings), officers, capital, CNAE, objeto social. ' +
+    'Coverage: 40,345,410 acts since 2009. Spain only. API key required.',
+    BormeLookupSchema.shape,
+    withLogging('borme_lookup', true, (args) =>
+      bormeLookup(args as { company: string })
+    ),
+  );
+
+  // --- Tool 12: get_showcase (public) ---
+  server.tool(
+    'get_showcase',
+    'Curated IBEX35 + EU entity examples. FREE — does not consume quota. Use to ' +
+    'explore data depth before purchasing higher tiers. No API key required.',
+    {},
+    withLogging('get_showcase', false, (args) =>
+      getShowcase(args as Record<string, never>)
+    ),
+  );
+
+  // --- Tool 13: professional_lookup (API key required) ---
+  server.tool(
+    'professional_lookup',
+    'Verify professional registrations across 24 Spanish health/legal/psychology ' +
+    'verticals: REPS healthcare, CGAE abogados, COP psicólogos, CGCFE ' +
+    'fisioterapeutas, CGCL logopedas, CGCODN dietistas, CGCOP podólogos, ' +
+    'CGCOO ópticos, OCV veterinarios, terapeutas ocupacionales (17 CCAA), ' +
+    'guía dentistas. Returns colegiado number, college, specialty, status. ' +
+    'API key required.',
+    ProfessionalLookupSchema.shape,
+    withLogging('professional_lookup', true, (args) =>
+      professionalLookup(args as { query: string })
+    ),
+  );
+
+  // --- Tool 14: get_full_dossier (API key required) — KILLER aggregator ---
+  server.tool(
+    'get_full_dossier',
+    'Return a complete dossier on any company — 90+ fields aggregated from 4 ' +
+    'ENTIA sources in parallel: entity_lookup (identity + trust score + GLEIF + ' +
+    'Wikidata + BORME basic), zone_profile (30+ socioeconomic fields, ES only), ' +
+    'borme_lookup (full BORME mercantile acts, ES only), verify_vat (VIES live, ' +
+    'EU only). Use this for due diligence, KYB, or when the user asks for ' +
+    '"everything about" a company. Single call replaces 4 separate tool calls. ' +
+    'Typical latency 1-3s. API key required.',
+    FullDossierSchema.shape,
+    withLogging('get_full_dossier', true, (args) =>
+      getFullDossier(args as { query: string })
     ),
   );
 

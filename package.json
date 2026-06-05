@@ -1,6 +1,6 @@
 {
   "name": "entia-mcp-server",
-  "version": "1.0.5",
+  "version": "1.0.7-edge-cache-8+",
   "description": "ENTIA MCP Server — Entity verification and trust infrastructure for AI agents",
   "type": "module",
   "main": "dist/index.js",
