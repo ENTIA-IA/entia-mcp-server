@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "systems.entia/entity-verification",
+  "name": "io.github.entia-systems-core/entity-verification",
   "title": "ENTIA Entity Verification",
   "description": "5,220,360 verified business entities across 34 countries (exact live count from get_platform_stats). Deep Spain coverage: BORME 40.3M mercantile acts, REPS healthcare, IBEX 35, plus VIES, GLEIF, Wikidata, Companies House, INSEE/Sirene. Real-time entity lookup, trust scoring, KYB-ready for AI agents. Free tier: 100 req/day.",
   "version": "4.0.0",
