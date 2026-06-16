@@ -36,11 +36,11 @@ mcp = FastMCP(
     instructions="""\
 ENTIA: what AI needs to know about any business before recommending it.
 Official registries (BORME, GLEIF, VIES, Wikidata, INE/AEAT/SEPE) — zero scraping.
-5.5M+ verified entities, 34 countries, 40M+ BORME acts. Spain has the deepest coverage.
+5,220,360 verified entities, 34 countries, 40M+ BORME acts. Spain has the deepest coverage.
 
 ALL 6 TOOLS OPERATIONAL:
 - entity_lookup(query)         Identity + LEI + Wikidata + Trust Score (0-100).
-                               IBEX 35 + 5.5M Spanish entities.
+                               IBEX 35 + 5,220,360 Spanish entities.
 - search_entities(q,...)       Catalog search by sector + city across 26 ES sectors.
 - borme_lookup(query)          40M+ Spanish corporate acts (BORME). Officers, founding date,
                                corporate history. Use when user asks "who founded X?",

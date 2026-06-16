@@ -6,11 +6,11 @@ ENTIA provides verified entity data across 34 countries — accessible via [Mode
 
 | Metric | Value |
 |---|---|
-| Verified entities | 5.5M+ |
+| Verified entities | 5,220,360 |
 | Countries | 34 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
-| MCP tools | 8 |
+| MCP tools | 13 |
 | REST endpoints | 4 |
 
 ## Quick Start (< 2 minutes)
@@ -65,23 +65,27 @@ curl "https://entia.systems/v1/verify/vat/ESA28015865"
 curl "https://entia.systems/v1/stats"
 ```
 
-### Option 3: Python SDK (coming soon)
+### Option 3: Python client (in this repo)
 
-A Python client (`entia-mcp` on PyPI) and LangChain integration are on the
-roadmap. Not yet published. Until then, use Option 1 (MCP) or Option 2 (REST).
+A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools as convenience methods). The full 13-tool surface is always available via the hosted endpoint (Option 1). A published PyPI package is planned.
 
-## 8 MCP Tools
+## 13 MCP Tools
 
 | Tool | What it does |
 |---|---|
-| `entity_lookup` | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME + VIES + GLEIF + OFAC. 5.5M entities, 34 countries |
-| `search_entities` | Browse registry by name, sector, city, country |
-| `borme_lookup` | Spanish mercantile acts (40.3M, 2009-2026) — directors, officers, constitutions |
-| `verify_vat` | EU VAT real-time via VIES (27 member states) |
-| `zone_profile` | Spanish socioeconomic data by postal code (INE/SEPE/AEAT) — income, unemployment, business density |
-| `get_competitors` | Competitors in same sector and city |
-| `ai_ready_profile` | JSON-LD @graph + enrichment for an entity (KYB-ready payload for AI agents) |
-| `get_showcase` | Curated enriched showcase entities (demo / discovery) |
+| `entity_lookup` | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF. |
+| `search_entities` | Search verified entities across 34 countries by name, keyword, country, or sector. |
+| `verify_vat` | Real-time EU VAT validation via VIES (27 member states). |
+| `zone_profile` | Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density. |
+| `ai_ready_profile` | Full AI-ready JSON-LD profile for an entity (4-node @graph). |
+| `get_competitors` | Real competitors in the same sector and geography. |
+| `get_showcase` | Curated IBEX35 + EU showcase entities. Free, does not consume quota. |
+| `professional_lookup` | Verify professional registrations across 24 Spanish health/legal/psychology verticals. Requires DPA (GDPR Art. 28). |
+| `get_full_dossier` | Aggregator: 90+ fields about an entity in one call (combines 4 ENTIA sources). |
+| `get_platform_stats` | Live platform stats: entities, countries, sources. |
+| `run_risk_audit` | AI-readiness + digital risk audit for any domain. |
+| `get_entia_home` | Full Schema.org JSON-LD @graph for an entity (Entia Home). |
+| `lookup_by_domain` | Look up a business entity by its website domain. Roadmap: coming in v1.2. |
 
 ## Pricing
 
@@ -135,91 +139,3 @@ Built by [PrecisionAI Marketing OU](https://entia.systems) (Estonia, EU).
 ## License
 
 Proprietary. See [Terms of Service](https://entia.systems/legal/terms).
-
-## AWS deployment (emergency migration runbook)
-
-This repository now includes a minimal AWS bootstrap for running the standalone MCP server on **ECR + ECS Fargate + ALB + Route 53 + ACM + Secrets Manager + CloudWatch Logs** under `infra/aws/`.
-
-### What is deployed
-
-- ECR repository for container images.
-- ECS cluster, task definition, and Fargate service.
-- ALB with:
-  - port 80 redirect to 443
-  - port 443 HTTPS listener (ACM certificate)
-  - target group health check on `/health`
-- Security groups (ALB public ingress, ECS ingress from ALB only).
-- Route53 alias record (optional) for `mcp.entia.systems`.
-- CloudWatch Logs group for ECS logs.
-- IAM roles with least-privilege baseline, plus optional Secrets Manager access.
-
-### Runtime assumptions preserved
-
-- `MCP_TRANSPORT=http`
-- `MCP_PORT=3000`
-- Health endpoint path: `/health`
-
-### Required AWS environment variables (GitHub Actions repository variables)
-
-- `AWS_REGION`
-- `ECR_REPOSITORY` (example: `123456789012.dkr.ecr.us-east-1.amazonaws.com/entia-mcp-prod-mcp`)
-- `ECS_CLUSTER`
-- `ECS_SERVICE`
-- `DOCKERFILE_PATH` (optional, defaults to `Dockerfile`)
-
-### Required GitHub Actions secrets
-
-- `AWS_GITHUB_ACTIONS_ROLE_ARN` (OIDC role ARN with Terraform/ECR/ECS permissions)
-- `TF_VARS_JSON_B64` (base64-encoded JSON tfvars for required Terraform inputs except `container_image`)
-
-### Required runtime secrets (AWS Secrets Manager)
-
-Configure as `secret_arns` map in Terraform (`ENV_VAR_NAME => secret ARN`), for example:
-
-- `ENTIA_API_KEY`
-- Any upstream API credentials used by the standalone MCP server
-- SMTP or provider tokens if used by the runtime
-
-> Keep all credentials in Secrets Manager. Do not hardcode secrets in workflow files or Terraform variables.
-
-### Deploy steps
-
-1. Copy `infra/aws/terraform.tfvars.example` to `infra/aws/terraform.tfvars`.
-2. Fill network/DNS/certificate/image values.
-3. Run:
-   - `terraform -chdir=infra/aws init`
-   - `terraform -chdir=infra/aws plan`
-   - `terraform -chdir=infra/aws apply`
-4. For CI deploys, provide `TF_VARS_JSON_B64` secret (base64 of tfvars JSON) and trigger workflow `AWS MCP Deploy`.
-5. Push to `main` or trigger GitHub Actions workflow `AWS MCP Deploy`.
-6. Validate smoke checks:
-   - `GET https://mcp.entia.systems/health` returns 200
-   - MCP endpoint is reachable via ALB
-   - ECS service has healthy targets
-
-### Rollout steps (production-safe)
-
-1. Deploy infra and ECS service without changing DNS (`create_dns_record=false`) and test on ALB DNS name.
-2. Run smoke checks on ALB hostname.
-3. Enable DNS alias (`create_dns_record=true`) once healthy.
-4. Monitor CloudWatch Logs + ALB target health for at least one full business cycle.
-
-### Rollback steps
-
-1. Revert DNS alias to previous serving endpoint (`mcp.entia.systems`).
-2. Re-deploy previous stable image tag **or** previous task definition revision in ECS:
-   - `aws ecs update-service --cluster <cluster> --service <service> --task-definition <family:revision> --force-new-deployment`
-3. If needed, roll back Terraform to previous commit and apply.
-4. Confirm `/health` and MCP endpoint recovery.
-
-### DNS cutover steps for `mcp.entia.systems`
-
-1. Ensure ACM cert is issued for `mcp.entia.systems` in the deployment region.
-2. Apply Terraform with `create_dns_record=true`, `hosted_zone_id`, and `domain_name="mcp.entia.systems"`.
-3. Verify Route53 alias points to ALB and target group is healthy.
-4. Execute post-cutover checks:
-   - TLS certificate chain valid
-   - `/health` = 200
-   - MCP request/response path works end-to-end
-
-For additional safety/rollback details, see `AGENTS.md` and `docs/aws-migration-assumptions.md`.
