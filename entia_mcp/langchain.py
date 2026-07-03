@@ -47,7 +47,7 @@ def _search(query: str, country: str = "ES", limit: int = 5) -> str:
 def _profile(entity: str, country: str = None) -> str:
     client = EntiaClient()
     try:
-        result = client.profile(entity=entity, country=country)
+        result = client.profile(query=entity, country=country)
         return json.dumps(result, ensure_ascii=False, indent=2)
     except EntiaAPIError as e:
         return json.dumps({"error": "profile_failed", "message": str(e)})

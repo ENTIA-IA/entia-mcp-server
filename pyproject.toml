@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "entia-mcp"
-version = "0.1.0"
+version = "4.0.0"
 description = "ENTIA client — structured business intelligence for AI agents. 5,220,360 verified entities across 34 countries."
 readme = "README.md"
 requires-python = ">=3.10"

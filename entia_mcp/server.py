@@ -69,7 +69,7 @@ Get API key: https://entia.systems/mcp-setup
 def _headers() -> dict[str, str]:
     h: dict[str, str] = {
         "Accept": "application/json",
-        "User-Agent": "entia-mcp-server/3.2.4",
+        "User-Agent": "entia-mcp-server/4.0.0",
     }
     if API_KEY:
         h["X-ENTIA-Key"] = API_KEY
@@ -102,7 +102,7 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
     req_headers = {
         "Content-Type": "application/json",
         "Accept": "application/json, text/event-stream",
-        "User-Agent": "entia-mcp-server/3.2.4",
+        "User-Agent": "entia-mcp-server/4.0.0",
     }
     if API_KEY:
         req_headers["X-ENTIA-Key"] = API_KEY
