@@ -139,3 +139,5 @@ Built by [PrecisionAI Marketing OU](https://entia.systems) (Estonia, EU).
 ## License
 
 Proprietary. See [Terms of Service](https://entia.systems/legal/terms).
+
+<!-- last-synced: 2026-07-04 (re-index nudge; content authoritative at v4.1.0, 13 tools) -->
