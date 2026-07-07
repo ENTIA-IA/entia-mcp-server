@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "ENTIA Entity Verification",
-  "description": "11,330,392 verified business entities across 10 countries (live count from get_platform_stats): France, UK, Spain, Switzerland, Czechia, Norway, Finland, Sweden, Estonia, Ireland. Anchored to official registries: BORME 40.3M mercantile acts, GLEIF LEI, plus EU VAT validation across all 27 member states via VIES. Real-time entity lookup, trust scoring, KYB-ready for AI agents. Free tier: 100 req/day.",
+  "description": "11,330,392 verified business entities across 10 countries (live count from get_platform_stats): France, UK, Spain, Switzerland, Czechia, Norway, Finland, Sweden, Estonia, Ireland. Anchored to official registries: BORME 40.3M mercantile acts, GLEIF LEI, plus EU VAT validation across all 27 member states via VIES. Real-time entity lookup, trust scoring, KYB-ready for AI agents. Free tier: 100 req/month.",
   "icon": "https://entia.systems/assets/entia_logo_official.png",
   "logo": "https://entia.systems/assets/entia_logo_official.png",
   "homepage": "https://entia.systems",
@@ -38,7 +38,7 @@
   "env": [
     {
       "name": "ENTIA_API_KEY",
-      "description": "Optional API key (entia_live_...) for paid tiers. Free tier (100 req/day) needs no key. Get yours at https://entia.systems/mcp-setup",
+      "description": "Optional API key (entia_live_...) for paid tiers. Free tier (100 req/month) needs no key. Get yours at https://entia.systems/mcp-setup",
       "required": false
     }
   ],
