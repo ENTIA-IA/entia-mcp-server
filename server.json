@@ -2,9 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.entia-systems-core/entity-verification",
   "title": "ENTIA Entity Verification",
-  "description": "Verified business identity for AI agents: 11.3M+ companies across 10 countries, EU VAT validation (VIES, 27 states), BORME 40M+ acts, GLEIF LEI. KYB-ready. Free tier.",
+  "description": "Verified business identity for AI agents: 11.3M companies, EU VAT (VIES), BORME, GLEIF. Free tier.",
   "version": "4.2.0",
-  "icon": "https://entia.systems/assets/entia_logo_official.png",
   "websiteUrl": "https://entia.systems",
   "repository": {
     "url": "https://github.com/ENTIA-IA/entia-mcp-server",
