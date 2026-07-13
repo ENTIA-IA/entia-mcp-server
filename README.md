@@ -2,7 +2,7 @@
 
 **Structured business intelligence for AI agents.**
 
-ENTIA provides verified entity data across 34 countries — accessible via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) or REST API.
+ENTIA provides verified entity data across 10 countries — accessible via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) or REST API.
 
 | Metric | Value |
 |---|---|
@@ -74,7 +74,7 @@ A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools a
 | Tool | What it does |
 |---|---|
 | `entity_lookup` | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF. |
-| `search_entities` | Search verified entities across 34 countries by name, keyword, country, or sector. |
+| `search_entities` | Search verified entities across 10 countries by name, keyword, country, or sector. |
 | `verify_vat` | Real-time EU VAT validation via VIES (27 member states). |
 | `zone_profile` | Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density. |
 | `ai_ready_profile` | Full AI-ready JSON-LD profile for an entity (4-node @graph). |
