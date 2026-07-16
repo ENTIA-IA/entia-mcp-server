@@ -6,7 +6,7 @@ ENTIA provides verified entity data across 10 countries — accessible via [Mode
 
 | Metric | Value |
 |---|---|
-| Verified entities | 5,220,360 |
+| Verified entities | 11,330,392 |
 | Countries | 10 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
