@@ -43,18 +43,17 @@
     }
   ],
   "tools": [
-    {"name": "entity_lookup", "description": "Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF."},
-    {"name": "search_entities", "description": "Search verified entities across 10 countries by name, keyword, country, or sector."},
+    {"name": "entity_lookup", "description": "Look up any business entity by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF."},
+    {"name": "search_entities", "description": "Search verified entities across 10 countries by name, keyword, country, city or sector."},
     {"name": "verify_vat", "description": "Real-time EU VAT validation via VIES (27 member states)."},
-    {"name": "zone_profile", "description": "Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density."},
-    {"name": "ai_ready_profile", "description": "Full AI-ready JSON-LD profile for an entity (4-node @graph)."},
-    {"name": "get_competitors", "description": "Real competitors in the same sector and geography."},
+    {"name": "zone_profile", "description": "Socioeconomic profile of a Spanish postal code (INE/SEPE/AEAT): income, employment, business density."},
+    {"name": "get_competitors", "description": "Real competitors in the same sector and city. Spain only on the public surface."},
     {"name": "get_showcase", "description": "Curated IBEX35 + EU showcase entities. Free, does not consume quota."},
     {"name": "professional_lookup", "description": "Verify professional registrations across 24 Spanish health/legal/psychology verticals. Requires DPA (GDPR Art. 28)."},
     {"name": "get_full_dossier", "description": "Aggregator: 90+ fields about an entity in one call (combines 4 ENTIA sources)."},
     {"name": "get_platform_stats", "description": "Live platform stats: entities, countries, sources."},
     {"name": "run_risk_audit", "description": "AI-readiness + digital risk audit for any domain."},
     {"name": "get_entia_home", "description": "Full Schema.org JSON-LD @graph for an entity (Entia Home)."},
-    {"name": "lookup_by_domain", "description": "Look up a business entity by its website domain. Roadmap: coming in v1.2."}
+    {"name": "get_entity_home_projection", "description": "Read the entity_home_projection.v1 snapshot for an Entia Home (claims + projection + policy)."}
   ]
 }
