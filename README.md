@@ -137,6 +137,17 @@ Built by [PrecisionAI Marketing OU](https://entia.systems) (Estonia, EU).
 
 ## License
 
-Proprietary. See [Terms of Service](https://entia.systems/legal/terms).
+**Code: MIT** (see [`LICENSE`](LICENSE)). This server is a thin MCP wrapper: it
+speaks JSON-RPC and proxies to the ENTIA API. Keeping the wrapper open is
+deliberate — it lets any client audit exactly what is sent and returned.
+
+**Data: proprietary — MIT does not apply to it.** The verified-entity corpus
+reached through this server is licensed separately and access is controlled by
+API key. Use of the data is governed by the
+[Data Licensing Framework](https://entia.systems/legal/data-licensing),
+the [MCP Terms](https://entia.systems/legal/mcp-terms) and the
+[Terms of Service](https://entia.systems/legal/terms), and is protected by the
+sui generis database right (Directive 96/9/EC). Cloning this repository grants
+no right whatsoever over the corpus.
 
 <!-- last-synced: 2026-08-18 — verificado contra tools/list en vivo de https://mcp.entia.systems/mcp (12 tools) y /.well-known/ai-pricing.json v1.5.1 (TRACE 100/month). -->
