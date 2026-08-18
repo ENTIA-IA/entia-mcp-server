@@ -89,7 +89,7 @@ def build_entia_tools() -> list:
             func=_search,
             name="entia_search",
             description=(
-                "Search ENTIA for businesses by name across 34 countries. "
+                "Search ENTIA for businesses by name across 10 countries. "
                 "Use this first when the exact entity identifier is unknown. "
                 "Returns: name, city, sector, phone, website, ENTIA URL."
             ),

@@ -36,28 +36,31 @@ mcp = FastMCP(
     instructions="""\
 ENTIA: what AI needs to know about any business before recommending it.
 Official registries (BORME, GLEIF, VIES, Wikidata, INE/AEAT/SEPE) — zero scraping.
-5,220,360 verified entities, 34 countries, 40M+ BORME acts. Spain has the deepest coverage.
+11,330,392 verified entities, 10 countries, 40.3M BORME acts. Spain has the deepest coverage.
 
-ALL 6 TOOLS OPERATIONAL:
+This Python client wraps a SUBSET of the ENTIA REST API as convenience tools.
+The hosted MCP server at https://mcp.entia.systems/mcp is the canonical surface
+and serves 12 tools; `tools/list` there is always authoritative.
+
+TOOLS IN THIS CLIENT:
 - entity_lookup(query)         Identity + LEI + Wikidata + Trust Score (0-100).
-                               IBEX 35 + 5,220,360 Spanish entities.
 - search_entities(q,...)       Catalog search by sector + city across 26 ES sectors.
-- borme_lookup(query)          40M+ Spanish corporate acts (BORME). Officers, founding date,
-                               corporate history. Use when user asks "who founded X?",
-                               "when was X incorporated?", "directors of X".
+- borme_lookup(query)          40.3M Spanish corporate acts (BORME). Officers, founding date,
+                               corporate history. REST-only helper: this is NOT a tool of the
+                               public MCP surface (retired 2026-06-15); use entity_lookup or
+                               get_full_dossier over MCP instead.
 - verify_vat(vat_id)           Live EU VIES validation — 27 member states.
 - zone_profile(postal_code)    Spanish CP-level economics: income (AEAT), unemployment (SEPE),
-                               demographics (INE), property €/m² (MITMA), broadband (MITECO).
+                               demographics (INE), property EUR/m2 (MITMA), broadband (MITECO).
 - get_competitors(sector,city) Companies in same sector and city.
 
 QUICK START — queries that work today:
-  entity_lookup("Telefonica")           → LEI, BORME 17K acts, Wikidata, trust score
-  borme_lookup("A28015865")             → corporate history Telefonica
-  zone_profile("28001")                 → Madrid Salamanca economics
-  verify_vat("ESA28015865")             → live VIES valid + canonical name
-  search_entities(q="dental",city="Madrid",limit=10) → 10 verified clinics
+  entity_lookup("Telefonica")           -> LEI, BORME acts, Wikidata, trust score
+  zone_profile("28001")                 -> Madrid Salamanca economics
+  verify_vat("ESA28015865")             -> live VIES valid + canonical name
+  search_entities(q="dental",city="Madrid",limit=10) -> 10 verified clinics
 
-Get API key: https://entia.systems/mcp-setup
+Free tier: 100 requests/month. Get API key: https://entia.systems/mcp-setup
 """,
 )
 
@@ -157,7 +160,7 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
 
 @mcp.tool()
 def entity_lookup(query: str) -> dict[str, Any]:
-    """Verify the identity of any business across 34 countries.
+    """Verify the identity of any business across 10 countries.
 
     Use when: user asks "is this company legit?", "check CIF B80988678", "verify Telefonica".
     Returns: Trust Score 0-100, BORME acts count, LEI, Wikidata QID, jurisdiction.
@@ -203,7 +206,7 @@ def search_entities(
 
 @mcp.tool()
 def borme_lookup(query: str) -> dict[str, Any]:
-    """Spanish mercantile acts from BORME (40M+ acts, 2009-2026).
+    """Spanish mercantile acts from BORME (40.3M acts, 2009-2026). REST-only: retired from the public MCP surface.
 
     Use when: user asks "who founded X?", "when was X incorporated?",
               "directors of Santander", "corporate history of Inditex".
