@@ -10,7 +10,7 @@ ENTIA provides verified entity data across 10 countries — accessible via [Mode
 | Countries | 10 |
 | BORME mercantile acts | 40.3M |
 | Healthcare professionals | 570K+ |
-| MCP tools | 13 |
+| MCP tools | 12 |
 | REST endpoints | 4 |
 
 ## Quick Start (< 2 minutes)
@@ -67,9 +67,9 @@ curl "https://entia.systems/v1/stats"
 
 ### Option 3: Python client (in this repo)
 
-A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools as convenience methods). The full 13-tool surface is always available via the hosted endpoint (Option 1). A published PyPI package is planned.
+A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools as convenience methods). The full 12-tool surface is always available via the hosted endpoint (Option 1). A published PyPI package is planned.
 
-## 13 MCP Tools
+## 12 MCP Tools
 
 | Tool | What it does |
 |---|---|
@@ -77,7 +77,6 @@ A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools a
 | `search_entities` | Search verified entities across 10 countries by name, keyword, country, or sector. |
 | `verify_vat` | Real-time EU VAT validation via VIES (27 member states). |
 | `zone_profile` | Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density. |
-| `ai_ready_profile` | Full AI-ready JSON-LD profile for an entity (4-node @graph). |
 | `get_competitors` | Real competitors in the same sector and geography. |
 | `get_showcase` | Curated IBEX35 + EU showcase entities. Free, does not consume quota. |
 | `professional_lookup` | Verify professional registrations across 24 Spanish health/legal/psychology verticals. Requires DPA (GDPR Art. 28). |
@@ -85,16 +84,16 @@ A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools a
 | `get_platform_stats` | Live platform stats: entities, countries, sources. |
 | `run_risk_audit` | AI-readiness + digital risk audit for any domain. |
 | `get_entia_home` | Full Schema.org JSON-LD @graph for an entity (Entia Home). |
-| `lookup_by_domain` | Look up a business entity by its website domain. Roadmap: coming in v1.2. |
+| `get_entity_home_projection` | Machine-readable projection of an Entia Home record (v1). |
 
 ## Pricing
 
-Free tier: **100 requests/day** per IP, no signup. Authoritative pricing is published live at
+Free tier: **100 requests/month**. Authoritative pricing is published live at
 [entia.systems/.well-known/ai-pricing.json](https://entia.systems/.well-known/ai-pricing.json).
 
 | Tier | Price | Requests | Overage |
 |---|---|---|---|
-| TRACE | Free | 100/day | Hard block |
+| TRACE | Free | 100/month | Hard block |
 | SIGNAL | EUR 29/month | 500/month | Hard block |
 | BUILD | EUR 99/month | 2,500/month | Hard block |
 | INTEGRATE | EUR 399/month | 10,000/month | EUR 0.15/req |
@@ -140,4 +139,4 @@ Built by [PrecisionAI Marketing OU](https://entia.systems) (Estonia, EU).
 
 Proprietary. See [Terms of Service](https://entia.systems/legal/terms).
 
-<!-- last-synced: 2026-07-04 (re-index nudge; content authoritative at v4.1.0, 13 tools) -->
+<!-- last-synced: 2026-08-18 — verificado contra tools/list en vivo de https://mcp.entia.systems/mcp (12 tools) y /.well-known/ai-pricing.json v1.5.1 (TRACE 100/month). -->
