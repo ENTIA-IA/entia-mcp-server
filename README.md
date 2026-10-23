@@ -11,7 +11,7 @@ ENTIA gives AI agents verified business identity data from official public regis
 | Active sources | 16 |
 | MCP tools | 12 |
 
-<sub>Figures from live `get_platform_stats` and `tools/list` at https://mcp.entia.systems/mcp (2026-10-14).</sub>
+<sub>Reference snapshot / tools verified on 2026-10-14; **do not assume the snapshot is updated on every registry recrawl.** Query `get_platform_stats` for current coverage and `tools/list` for current tool names. An entity registry identifier is not a VIES-confirmed VAT number.</sub>
 
 ## Quick Start (< 2 minutes)
 
@@ -111,6 +111,8 @@ entity returned ("entidad consultada"), deduplicated per UTC calendar day.
 Human pricing: [entia.systems/pricing](https://entia.systems/pricing) ·
 Machine-readable: [ai-pricing.json](https://entia.systems/.well-known/ai-pricing.json) ·
 [/api/v1/mcp/plans](https://api.entia.systems/api/v1/mcp/plans)
+
+**Maintainers of external MCP directories:** this GitHub README and `glama.json` supersede older cards describing *5.5M entities / 34 countries / 20 MCP tools / per-call overage*. Please refresh the **existing** listing and use the canonical `io.github.entia-systems-core/entity-verification` registry identity, rather than creating a duplicate. Publisher-side metadata is not proof that a third-party index has refreshed.
 
 **API/MCP access is not a data licence.** Plans cover per-lookup grounding only. AI training,
 fine-tuning, dataset creation and bulk extraction require the separate

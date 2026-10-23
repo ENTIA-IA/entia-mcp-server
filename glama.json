@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "ENTIA Entity Verification",
-  "description": "Verified business identity for AI agents from official public registries: 11.3M entities, 40.3M BORME mercantile acts, GLEIF LEI and real-time EU VAT validation via VIES. 12 tools. Free preview without API key (entity_lookup). Monthly EUR plans, no overage (HTTP 429 at quota). API/MCP access is not a data licence: AI training/bulk extraction requires ENTIA-LTC-1.0. Pricing: https://entia.systems/pricing",
+  "description": "Verified business identity for AI agents via 12 MCP tools across 10 registry countries (11,330,391 indexed entities in a dated reference snapshot; field-level coverage varies). Official national company identifiers, BORME history, GLEIF/LEI, and VIES EU VAT validation on demand; a company registration number is NOT proof of active VAT registration. TRACE 100 entities/month free; paid plans count distinct entities consulted per billing quota, no overage charges. API/MCP access does not grant bulk extraction, redistribution, or AI training rights. Canonical current tariffs: https://entia.systems/.well-known/ai-pricing.json; source/methodology: https://entia.systems/mcp-docs",
   "icon": "https://entia.systems/assets/entia_logo_official.png",
   "logo": "https://entia.systems/assets/entia_logo_official.png",
   "homepage": "https://entia.systems",
