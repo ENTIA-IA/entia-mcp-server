@@ -9,9 +9,9 @@ ENTIA gives AI agents verified business identity data from official public regis
 | Verified entities | 11,330,391 |
 | BORME mercantile acts | 40.3M |
 | Active sources | 16 |
-| MCP tools | 12 |
+| MCP tools | 15 |
 
-<sub>Reference snapshot / tools verified on 2026-10-14; **do not assume the snapshot is updated on every registry recrawl.** Query `get_platform_stats` for current coverage and `tools/list` for current tool names. An entity registry identifier is not a VIES-confirmed VAT number.</sub>
+<sub>Coverage snapshot verified on 2026-10-14; tool list and minimum plans verified against `tools/list` and ai-pricing.json v1.6.10 on 2026-11-02; **do not assume the snapshot is updated on every registry recrawl.** Query `get_platform_stats` for current coverage and `tools/list` for current tool names. An entity registry identifier is not a VIES-confirmed VAT number.</sub>
 
 ## Quick Start (< 2 minutes)
 
@@ -43,6 +43,8 @@ No installation needed. Connect your MCP client directly:
 }
 ```
 
+**ChatGPT** — add `https://mcp.entia.systems/mcp` as a custom MCP connector. The `search` and `fetch` tools follow ChatGPT's connector contract and work without a key.
+
 Then try:
 ```
 Look up Telefonica in Spain
@@ -67,28 +69,34 @@ curl "https://entia.systems/v1/stats"
 
 ### Option 3: Python client (in this repo)
 
-A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools as convenience methods). The full 12-tool surface is always available via the hosted endpoint (Option 1). A published PyPI package is planned.
+A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools as convenience methods). The full 15-tool surface is always available via the hosted endpoint (Option 1). A published PyPI package is planned.
 
-## 12 MCP Tools
+## 15 MCP Tools
 
-| Tool | What it does |
-|---|---|
-| `entity_lookup` | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF. |
-| `search_entities` | Search verified entities by name, keyword, country, city or sector. |
-| `verify_vat` | Real-time EU VAT validation via VIES (27 member states). |
-| `zone_profile` | Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density. |
-| `get_competitors` | Real competitors in the same sector and geography. |
-| `get_showcase` | Curated IBEX35 + EU showcase entities. Free, does not consume quota. |
-| `professional_lookup` | Verify professional registrations across 24 Spanish health/legal/psychology verticals. Requires DPA (GDPR Art. 28). |
-| `get_full_dossier` | Aggregator: 90+ fields about an entity in one call (combines 4 ENTIA sources). |
-| `get_platform_stats` | Live platform stats: entities, sources. Free, does not consume quota. |
-| `run_risk_audit` | AI-readiness + digital risk audit for any domain. |
-| `get_entia_home` | Full Schema.org JSON-LD @graph for an entity (Entia Home). |
-| `get_entity_home_projection` | Machine-readable projection of an Entia Home record (v1). |
+"Min plan" is the lowest plan that unlocks the tool (`tier_minimum` in [ai-pricing.json](https://entia.systems/.well-known/ai-pricing.json)). Calling a paid tool without a key returns HTTP 401 with the plan that unlocks it and a checkout link.
+
+| Tool | Min plan | What it does |
+|---|---|---|
+| `entity_lookup` | TRACE (free) | Verify identity of any business by name, CIF/NIF, EU VAT or LEI. Cross-checks BORME, VIES, GLEIF. |
+| `search_entities` | TRACE (free) | Search verified entities by name, keyword, country, city or sector. |
+| `verify_vat` | TRACE (free) | Real-time EU VAT validation via VIES (27 member states). |
+| `get_showcase` | TRACE (free) | Curated IBEX35 + EU showcase entities. Does not consume quota. |
+| `get_platform_stats` | TRACE (free) | Live platform stats: entities, sources. Does not consume quota. |
+| `get_entia_home` | TRACE (free) | Full Schema.org JSON-LD @graph for an entity (Entia Home). |
+| `search` | TRACE (free) | ChatGPT-compatible search over the ENTIA registry (wraps `search_entities`, free preview). |
+| `fetch` | TRACE (free) | ChatGPT-compatible fetch of one company's free registry preview by id (wraps `entity_lookup`). |
+| `zone_profile` | SIGNAL | Spanish socioeconomic profile by postal code (INE/SEPE/AEAT): income, employment, business density. |
+| `run_risk_audit` | SIGNAL | AI-readiness + digital risk audit for any domain. |
+| `get_entity_home_projection` | SIGNAL | Machine-readable projection of an Entia Home record (v1). |
+| `get_identity_verification` | SIGNAL | Fail-closed commercial identity status from the canonical Entia Home projection. |
+| `get_competitors` | BUILD | Real competitors in the same sector and geography. |
+| `get_full_dossier` | INTEGRATE | Aggregator: 90+ fields about an entity in one call (combines several ENTIA sources). |
+| `professional_lookup` | ENTERPRISE (DPA) | Verify professional registrations across Spanish health/legal/psychology verticals. Requires DPA (GDPR Art. 28). |
 
 ## Try it free (no key)
 
-`entity_lookup` works without an API key and returns a trace-level identity preview.
+Every tool marked TRACE (free) above works without an API key and returns a trace-level preview
+(checked on 2026-11-02 with `entity_lookup`, `search` and `verify_vat`).
 `get_showcase` and `get_platform_stats` do not consume quota.
 
 ## Pricing
@@ -167,4 +175,4 @@ the [MCP Terms](https://entia.systems/legal/mcp-terms) and the
 sui generis database right (Directive 96/9/EC). Cloning this repository grants
 no right whatsoever over the corpus.
 
-<!-- last-synced: 2026-10-14 — tools/list (12 tools), get_platform_stats, ai-pricing.json v1.6.7, /api/v1/mcp/plans. -->
+<!-- last-synced: 2026-11-02 — tools/list (15 tools), ai-pricing.json v1.6.10 (tools[].tier_minimum); coverage figures from 2026-10-14 get_platform_stats. -->
