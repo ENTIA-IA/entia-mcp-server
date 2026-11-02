@@ -90,6 +90,18 @@
     {
       "name": "get_entity_home_projection",
       "description": "Read the entity_home_projection.v1 snapshot for an Entia Home (claims + projection + policy)."
+    },
+    {
+      "name": "get_identity_verification",
+      "description": "Fail-closed commercial identity status from the canonical Entia Home projection."
+    },
+    {
+      "name": "search",
+      "description": "ChatGPT-compatible search over the ENTIA registry (wraps search_entities, free preview)."
+    },
+    {
+      "name": "fetch",
+      "description": "ChatGPT-compatible fetch of one company's free registry preview by id (wraps entity_lookup)."
     }
   ]
 }

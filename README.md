@@ -95,8 +95,10 @@ A Python client lives in this repo under `entia_mcp/` (wraps a subset of tools a
 
 ## Try it free (no key)
 
-Every tool marked TRACE (free) above works without an API key and returns a trace-level preview
+Every tool marked TRACE (free) above works without an API key. The lookup and search tools
+(`entity_lookup`, `search_entities`, `verify_vat`, `search`, `fetch`) return a trace-level preview
 (checked on 2026-11-02 with `entity_lookup`, `search` and `verify_vat`).
+`get_showcase`, `get_platform_stats` and `get_entia_home` return public data rather than a preview;
 `get_showcase` and `get_platform_stats` do not consume quota.
 
 ## Pricing
