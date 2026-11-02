@@ -1,7 +1,7 @@
 {
   "$schema": "https://glama.ai/mcp/schemas/server.json",
   "name": "ENTIA Entity Verification",
-  "description": "Verified business identity for AI agents via 12 MCP tools across 10 registry countries (11,330,391 indexed entities in a dated reference snapshot; field-level coverage varies). Official national company identifiers, BORME history, GLEIF/LEI, and VIES EU VAT validation on demand; a company registration number is NOT proof of active VAT registration. TRACE 100 entities/month free; paid plans count distinct entities consulted per billing quota, no overage charges. API/MCP access does not grant bulk extraction, redistribution, or AI training rights. Canonical current tariffs: https://entia.systems/.well-known/ai-pricing.json; source/methodology: https://entia.systems/mcp-docs",
+  "description": "Verified business identity for AI agents via 15 MCP tools across 10 registry countries (11,330,391 indexed entities in a dated reference snapshot; field-level coverage varies). Official national company identifiers, BORME history, GLEIF/LEI, and VIES EU VAT validation on demand; a company registration number is NOT proof of active VAT registration. TRACE 100 entities/month free; paid plans count distinct entities consulted per billing quota, no overage charges. API/MCP access does not grant bulk extraction, redistribution, or AI training rights. Canonical current tariffs: https://entia.systems/.well-known/ai-pricing.json; source/methodology: https://entia.systems/mcp-docs",
   "icon": "https://entia.systems/assets/entia_logo_official.png",
   "logo": "https://entia.systems/assets/entia_logo_official.png",
   "homepage": "https://entia.systems",
@@ -90,6 +90,18 @@
     {
       "name": "get_entity_home_projection",
       "description": "Read the entity_home_projection.v1 snapshot for an Entia Home (claims + projection + policy)."
+    },
+    {
+      "name": "get_identity_verification",
+      "description": "Fail-closed commercial identity status from the canonical Entia Home projection."
+    },
+    {
+      "name": "search",
+      "description": "ChatGPT-compatible search over the ENTIA registry (wraps search_entities, free preview)."
+    },
+    {
+      "name": "fetch",
+      "description": "ChatGPT-compatible fetch of one company's free registry preview by id (wraps entity_lookup)."
     }
   ]
 }
