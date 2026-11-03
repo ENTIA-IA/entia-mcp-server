@@ -1,7 +1,12 @@
 """ENTIA MCP Server — 6 tools for structured business intelligence.
 
 Runs locally via stdio transport (standard for MCP clients).
-Each tool calls the ENTIA REST API at https://entia.systems.
+With ENTIA_API_KEY set, entity_lookup / search_entities / verify_vat /
+borme_lookup call the REST API at https://entia.systems. Without a key they
+use the hosted MCP at https://mcp.entia.systems/mcp, which serves the free
+TRACE preview. zone_profile and get_competitors always use the hosted MCP, so
+the published plan minimum applies and the 401 carries minimum_plan and
+checkout_url.
 
 Usage:
     ENTIA_API_KEY=entia_live_... python -m entia_mcp.server
@@ -88,7 +93,11 @@ def _get(path: str, params: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         r.raise_for_status()
         return r.json()
     except httpx.HTTPStatusError as exc:
-        return {"error": str(exc), "status_code": exc.response.status_code}
+        out: dict[str, Any] = {"error": str(exc), "status_code": exc.response.status_code}
+        if exc.response.status_code in (401, 402):
+            out["upgrade_url"] = "https://entia.systems/mcp-setup"
+            out["hint"] = "Set ENTIA_API_KEY (x-entia-key). Without a key, use entity_lookup for the free TRACE preview."
+        return out
     except Exception as exc:  # noqa: BLE001
         return {"error": str(exc)}
 
@@ -113,7 +122,10 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
     try:
         with httpx.Client(timeout=TIMEOUT) as client:
             r = client.post(url, json=payload, headers=req_headers)
-        r.raise_for_status()
+        # 401/402 bodies carry the JSON-RPC result with minimum_plan and
+        # checkout_url; keep them instead of collapsing to a bare HTTP error.
+        if r.status_code not in (401, 402):
+            r.raise_for_status()
 
         # Response may be SSE or plain JSON
         text = r.text
@@ -170,7 +182,10 @@ def entity_lookup(query: str) -> dict[str, Any]:
     Args:
         query: Company name (Telefonica), CIF (A28015865), EU VAT (ESA28015865), or LEI (20 chars)
     """
-    return _get(f"/v1/profile/{query}")
+    if API_KEY:
+        return _get(f"/v1/profile/{query}")
+    # REST /v1/* requires a key; keyless calls get the hosted free TRACE preview.
+    return _mcp_call("entity_lookup", {"q": query})
 
 
 @mcp.tool()
@@ -201,7 +216,10 @@ def search_entities(
         params["sector"] = sector
     if city:
         params["city"] = city
-    return _get("/v1/search", params)
+    if API_KEY:
+        return _get("/v1/search", params)
+    params["country"] = country.lower()
+    return _mcp_call("search_entities", params)
 
 
 @mcp.tool()
@@ -220,7 +238,12 @@ def borme_lookup(query: str) -> dict[str, Any]:
     Args:
         query: Company name or Spanish CIF (without ES prefix, e.g. A28015865)
     """
+    if not API_KEY:
+        # REST /v1/profile requires a key; serve the free MCP preview instead.
+        return _mcp_call("entity_lookup", {"q": query})
     result = _get(f"/v1/profile/{query}", {"country": "ES"})
+    if "error" in result:
+        return result
     borme = result.get("borme", {})
     return {
         "found": result.get("found", False),
@@ -248,7 +271,9 @@ def verify_vat(vat_id: str) -> dict[str, Any]:
     Args:
         vat_id: Full EU VAT with country prefix (ESA28015865, FR12345678901, DE123456789)
     """
-    return _get(f"/v1/verify/vat/{vat_id}")
+    if API_KEY:
+        return _get(f"/v1/verify/vat/{vat_id}")
+    return _mcp_call("verify_vat", {"vat": vat_id})
 
 
 @mcp.tool()
@@ -295,20 +320,12 @@ def get_competitors(
         country: ISO country code. Default: ES
         limit: Max results 1-50. Default: 10
     """
-    params: dict[str, Any] = {
-        "sector": sector,
-        "city": city,
-        "country": country,
-        "limit": min(int(limit), 50),
-    }
-    result = _get("/v1/search", params)
-    return {
-        "sector": sector,
-        "city": city,
-        "country": country,
-        "count": result.get("count", 0),
-        "competitors": result.get("entities", []),
-    }
+    # Hosted get_competitors needs the BUILD plan; without it the response
+    # carries minimum_plan and checkout_url. country is kept for API compat.
+    return _mcp_call(
+        "get_competitors",
+        {"sector": sector, "city": city, "limit": min(int(limit), 50)},
+    )
 
 
 # ---------------------------------------------------------------------------
