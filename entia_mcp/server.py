@@ -155,6 +155,12 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
                         continue
                     try:
                         msg = json.loads(raw)
+                        if "error" in msg:
+                            # JSON-RPC error delivered over SSE is not an empty
+                            # stream: preserve checkout metadata and HTTP status.
+                            if r.status_code in (401, 402):
+                                return {**denial, **msg}
+                            return msg
                         if "result" in msg:
                             content = msg["result"].get("content", [])
                             if content:
@@ -165,6 +171,8 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
                                     return {"text": inner}
                     except Exception:  # noqa: BLE001
                         continue
+            if r.status_code in (401, 402):
+                return denial
             return {"error": "no result in SSE stream"}
         else:
             msg = r.json()
