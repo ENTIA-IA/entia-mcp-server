@@ -176,6 +176,13 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
             return {"error": "no result in SSE stream"}
         else:
             msg = r.json()
+            if r.status_code in (401, 402):
+                # Keep both the structured JSON-RPC payload and the real
+                # transport status, even when the payload itself has no HTTP
+                # fields. Do not overwrite its semantic error object.
+                if isinstance(msg, dict):
+                    msg.setdefault("status_code", r.status_code)
+                    msg.setdefault("upgrade_url", denial["upgrade_url"])
             if "result" in msg:
                 content = msg["result"].get("content", [])
                 if content:
