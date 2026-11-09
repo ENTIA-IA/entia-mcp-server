@@ -5,7 +5,9 @@ Requirements:
 
 No ENTIA install needed: langchain-mcp-adapters loads the tools straight from
 https://mcp.entia.systems/mcp. Without ENTIA_API_KEY the agent gets the free
-TRACE view and only the tools that TRACE opens (read from ai-pricing.json):
+TRACE view and only the tools that TRACE opens (read from ai-pricing.json).
+This example deliberately remains TRACE-only even if ENTIA_API_KEY is set:
+the presence of a key alone does not prove a paid entitlement.
 a tool above your plan answers HTTP 401 with an X-ENTIA-Checkout-Url header,
 and the MCP SDK raises on that 401, which would stop the agent mid-run.
 Get a key at https://entia.systems/mcp-setup.
@@ -48,9 +50,10 @@ async def main() -> None:
         }
     )
     tools = await client.get_tools()
-    if not key:
-        allowed = trace_tool_names()
-        tools = [t for t in tools if t.name in allowed]
+    # A key does not establish its plan. This public demonstration is always
+    # constrained to TRACE; never hand unauthorized paid tools to the agent.
+    allowed = trace_tool_names()
+    tools = [t for t in tools if t.name in allowed]
     print(f"Loaded {len(tools)} ENTIA tools: {[t.name for t in tools]}")
 
     agent = create_react_agent(ChatOpenAI(model="gpt-4o-mini", temperature=0), tools, prompt=SYSTEM)
