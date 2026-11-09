@@ -127,6 +127,22 @@ def _mcp_call(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if r.status_code not in (401, 402):
             r.raise_for_status()
 
+        # Preserve HTTP denial details when upstream returns non-JSON.
+        # Valid JSON-RPC payment responses must remain readable.
+        if r.status_code in (401, 402):
+            denial = {
+                "error": f"HTTP {r.status_code}: authentication or paid plan required",
+                "status_code": r.status_code,
+                "upgrade_url": r.headers.get("X-ENTIA-Checkout-Url", "https://entia.systems/mcp-setup"),
+            }
+            if not r.text.strip():
+                return denial
+            try:
+                json.loads(r.text)
+            except (ValueError, TypeError):
+                if "data:" not in r.text:
+                    return denial
+
         # Response may be SSE or plain JSON
         text = r.text
         if text.startswith("event:") or "\ndata:" in text or text.startswith("data:"):
